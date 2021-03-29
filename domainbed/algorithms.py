@@ -249,7 +249,7 @@ class IRM(ERM):
     def update(self, minibatches, unlabeled=None):
         device = "cuda" if minibatches[0][0].is_cuda else "cpu"
         penalty_weight = (self.hparams['irm_lambda'] if self.update_count
-                          >= self.hparams['irm_penalty_anneal_iters'] else
+                          >= self.hparams['anneal_iters'] else
                           1.0)
         nll = 0.
         penalty = 0.
@@ -266,7 +266,7 @@ class IRM(ERM):
         penalty /= len(minibatches)
         loss = nll + (penalty_weight * penalty)
 
-        if self.update_count == self.hparams['irm_penalty_anneal_iters']:
+        if self.update_count == self.hparams['anneal_iters']:
             # Reset Adam, because it doesn't like the sharp jump in gradient
             # magnitudes that happens at this step.
             self.optimizer = torch.optim.Adam(
@@ -291,7 +291,7 @@ class VREx(ERM):
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None):
-        if self.update_count >= self.hparams["vrex_penalty_anneal_iters"]:
+        if self.update_count >= self.hparams["anneal_iters"]:
             penalty_weight = self.hparams["vrex_lambda"]
         else:
             penalty_weight = 1.0
@@ -312,7 +312,7 @@ class VREx(ERM):
         penalty = ((losses - mean) ** 2).mean()
         loss = mean + penalty_weight * penalty
 
-        if self.update_count == self.hparams['vrex_penalty_anneal_iters']:
+        if self.update_count == self.hparams['anneal_iters']:
             # Reset Adam (like IRM), because it doesn't like the sharp jump in
             # gradient magnitudes that happens at this step.
             self.optimizer = torch.optim.Adam(
@@ -851,8 +851,14 @@ class SD(ERM):
         super(SD, self).__init__(input_shape, num_classes, num_domains,
                                         hparams)
         self.sd_reg = hparams["sd_reg"]
+        self.anneal_iter = hparams['anneal_iters']
+
+        self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None):
+
+        penalty_weight = (self.sd_reg if self.update_count >= self.anneal_iter else 0.)
+
         all_x = torch.cat([x for x,y in minibatches])
         all_y = torch.cat([y for x,y in minibatches])
         all_p = self.predict(all_x)
@@ -864,6 +870,7 @@ class SD(ERM):
         self.optimizer.zero_grad()
         objective.backward()
         self.optimizer.step()
+        self.update_count += 1
 
         return {'loss': loss.item(), 'penalty': penalty.item()}
 
@@ -877,6 +884,9 @@ class ANDMask(ERM):
         super(ANDMask, self).__init__(input_shape, num_classes, num_domains, hparams)
 
         self.tau = hparams["tau"]
+        self.anneal_iter = hparams["ANDMask_anneal_iter"]
+
+        self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None):
         
@@ -899,8 +909,12 @@ class ANDMask(ERM):
         mean_loss = total_loss / len(minibatches)
 
         self.optimizer.zero_grad()
-        self.mask_grads(self.tau, param_gradients, self.network.parameters())
+        if self.update_count >= self.anneal_iter:
+            self.mask_grads(self.tau, param_gradients, self.network.parameters())
+        else:
+            mean_loss.backward()
         self.optimizer.step()
+        self.update_count += 1
 
         return {'loss': mean_loss.item()}
 
@@ -928,7 +942,14 @@ class IGA(ERM):
     def __init__(self, in_features, num_classes, num_domains, hparams):
         super(IGA, self).__init__(in_features, num_classes, num_domains, hparams)
 
+        self.penalty_weight = self.hparams['penalty']
+        self.anneal_iter = hparams["IGA_anneal_iter"]
+
+        self.register_buffer('update_count', torch.tensor([0]))
+
     def update(self, minibatches, unlabeled=False):
+
+        penalty_weight = (self.penalty_weight if self.update_count >= self.anneal_iter else 1.)
 
         all_x = torch.cat([x for x,y in minibatches])
         all_logits = self.network(all_x)
@@ -955,8 +976,9 @@ class IGA(ERM):
                 penalty_value += (g - mean_g).pow(2).sum()
 
         self.optimizer.zero_grad()
-        (mean_loss + self.hparams['penalty'] * penalty_value).backward()
+        (mean_loss + penalty_weight * penalty_value).backward()
         self.optimizer.step()
+        self.update_count += 1
 
 
-        return {'loss': mean_loss.item(), 'penalty': penalty_value.item()}
+        return {'loss': mean_loss.item(), 'penalty': penalty_value.item(), 'penalty_weight': penalty_weight}

@@ -120,7 +120,7 @@ class ColoredMNIST(MultipleEnvironmentMNIST):
     ENVIRONMENTS = ['+90%', '+80%', '-90%']
 
     def __init__(self, root, test_envs, hparams):
-        super(ColoredMNIST, self).__init__(root, [0.1, 0.2, 0.9],
+        super(ColoredMNIST, self).__init__(root, [0.9, 0.1, 0.2],
                                          self.color_dataset, (2, 28, 28,), 2)
 
         self.input_shape = (2, 28, 28,)
@@ -180,15 +180,15 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
 
 class Spirals(MultipleDomainDataset):
     CHECKPOINT_FREQ = 10
+    ENVIRONMENTS = [str(i) for i in range(8)]
 
     def __init__(self, root, test_env, hparams):
         super().__init__()
         self.datasets = []
-        environments = [i for i in range(8)]
 
         test_dataset = self.make_tensor_dataset(env='test')
         self.datasets.append(test_dataset)
-        for env in environments:
+        for env in self.ENVIRONMENTS:
             env_dataset = self.make_tensor_dataset(env=env)
             self.datasets.append(env_dataset)
         

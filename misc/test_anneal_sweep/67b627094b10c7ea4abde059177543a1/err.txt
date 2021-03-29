@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/jcaudet/Documents/GitRepos/DomainBed/domainbed/scripts/train.py", line 176, in <module>
+    algorithm = algorithm_class(dataset.input_shape, dataset.num_classes,
+  File "/home/jcaudet/Documents/GitRepos/DomainBed/domainbed/algorithms.py", line 887, in __init__
+    self.anneal_iter = hparams["ANDMask_anneal_iter"]
+KeyError: 'ANDMask_anneal_iter'

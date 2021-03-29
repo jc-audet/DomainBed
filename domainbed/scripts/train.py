@@ -47,6 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--uda_holdout_fraction', type=float, default=0)
     parser.add_argument('--skip_model_save', action='store_true')
     parser.add_argument('--save_model_every_checkpoint', action='store_true')
+    parser.add_argument('--anneal_iter', type=int, default=None)
     args = parser.parse_args()
 
     # If we ever want to implement checkpointing, just persist these values
@@ -78,6 +79,9 @@ if __name__ == "__main__":
             misc.seed_hash(args.hparams_seed, args.trial_seed))
     if args.hparams:
         hparams.update(json.loads(args.hparams))
+    
+    if args.anneal_iter is not None:
+        hparams['anneal_iter'] = args.anneal_iter
 
     print('HParams:')
     for k, v in sorted(hparams.items()):

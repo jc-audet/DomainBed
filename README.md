@@ -80,10 +80,28 @@ python3 -m domainbed.scripts.train\
 Launch a sweep:
 
 ```sh
-python -m domainbed.scripts.sweep launch\
-       --data_dir=/my/datasets/path\
-       --output_dir=/my/sweep/output/path\
-       --command_launcher MyLauncher
+python3 -m domainbed.scripts.sweep launch\
+       --algorithm ERM ANDMask\
+       --dataset Spirals\
+       --data_dir ./domainbed/data/\
+       --output_dir=./misc/test_anneal_sweep/\
+       --command_launcher local
+```
+```sh
+python3 -m domainbed.scripts.anneal_sweep launch\
+       --algorithm ERM ANDMask IRM IGA VREx\
+       --dataset Spirals ColoredMNIST\
+       --data_dir ./domainbed/data/\
+       --output_dir=./misc/test_anneal_sweep/\
+       --command_launcher local
+```
+```sh
+python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
+       --algorithm ERM ANDMask\
+       --dataset Spirals\
+       --data_dir ./domainbed/data/\
+       --output_dir=./misc/test_anneal_sweep/\
+       --command_launcher local
 ```
 
 Here, `MyLauncher` is your cluster's command launcher, as implemented in `command_launchers.py`. At the time of writing, the entire sweep trains tens of thousands of models (all algorithms x all datasets x 3 independent trials x 20 random hyper-parameter choices). You can pass arguments to make the sweep smaller:
@@ -93,7 +111,7 @@ python -m domainbed.scripts.sweep launch\
        --data_dir=/my/datasets/path\
        --output_dir=/my/sweep/output/path\
        --command_launcher MyLauncher\
-       --algorithms ERM DANN\
+       --algorithms ERM IRM\
        --datasets RotatedMNIST VLCS\
        --n_hparams 5\
        --n_trials 1
@@ -105,7 +123,14 @@ To view the results of your sweep:
 
 ````sh
 python -m domainbed.scripts.collect_results\
-       --input_dir=/my/sweep/output/path
+       --input_dir=./domainbed/misc/test_sweep_data/
+````
+````sh
+python3 -m domainbed.scripts.list_top_hparams\
+       --input_dir=./domainbed/misc/test_sweep_data/\
+       --dataset VLCS\
+       --algorithm ERM\
+       --test_env 0
 ````
 
 ## Running unit tests
