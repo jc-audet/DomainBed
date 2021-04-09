@@ -95,6 +95,7 @@ if __name__ == "__main__":
 
     if torch.cuda.is_available():
         device = "cuda"
+        print("Training on CUDA")
     else:
         device = "cpu"
 

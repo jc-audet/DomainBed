@@ -249,7 +249,7 @@ class IRM(ERM):
     def update(self, minibatches, unlabeled=None):
         device = "cuda" if minibatches[0][0].is_cuda else "cpu"
         penalty_weight = (self.hparams['irm_lambda'] if self.update_count
-                          >= self.hparams['anneal_iters'] else
+                          >= self.hparams['anneal_iter'] else
                           1.0)
         nll = 0.
         penalty = 0.
@@ -266,13 +266,16 @@ class IRM(ERM):
         penalty /= len(minibatches)
         loss = nll + (penalty_weight * penalty)
 
-        if self.update_count == self.hparams['anneal_iters']:
-            # Reset Adam, because it doesn't like the sharp jump in gradient
-            # magnitudes that happens at this step.
-            self.optimizer = torch.optim.Adam(
-                self.network.parameters(),
-                lr=self.hparams["lr"],
-                weight_decay=self.hparams['weight_decay'])
+        ## Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
+        if penalty_weight >= 1.0:
+            loss /= penalty_weight
+        # if self.update_count == self.hparams['anneal_iter']:
+        #     # Reset Adam, because it doesn't like the sharp jump in gradient
+        #     # magnitudes that happens at this step.
+        #     self.optimizer = torch.optim.Adam(
+        #         self.network.parameters(),
+        #         lr=self.hparams["lr"],
+        #         weight_decay=self.hparams['weight_decay'])
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -291,7 +294,7 @@ class VREx(ERM):
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None):
-        if self.update_count >= self.hparams["anneal_iters"]:
+        if self.update_count >= self.hparams["anneal_iter"]:
             penalty_weight = self.hparams["vrex_lambda"]
         else:
             penalty_weight = 1.0
@@ -312,13 +315,16 @@ class VREx(ERM):
         penalty = ((losses - mean) ** 2).mean()
         loss = mean + penalty_weight * penalty
 
-        if self.update_count == self.hparams['anneal_iters']:
-            # Reset Adam (like IRM), because it doesn't like the sharp jump in
-            # gradient magnitudes that happens at this step.
-            self.optimizer = torch.optim.Adam(
-                self.network.parameters(),
-                lr=self.hparams["lr"],
-                weight_decay=self.hparams['weight_decay'])
+        ## Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
+        if penalty_weight >= 1.0:
+            loss /= penalty_weight
+        # if self.update_count == self.hparams['anneal_iter']:
+        #     # Reset Adam (like IRM), because it doesn't like the sharp jump in
+        #     # gradient magnitudes that happens at this step.
+        #     self.optimizer = torch.optim.Adam(
+        #         self.network.parameters(),
+        #         lr=self.hparams["lr"],
+        #         weight_decay=self.hparams['weight_decay'])
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -851,13 +857,11 @@ class SD(ERM):
         super(SD, self).__init__(input_shape, num_classes, num_domains,
                                         hparams)
         self.sd_reg = hparams["sd_reg"]
-        self.anneal_iter = hparams['anneal_iters']
+        self.anneal_iter = hparams['anneal_iter']
 
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None):
-
-        penalty_weight = (self.sd_reg if self.update_count >= self.anneal_iter else 0.)
 
         all_x = torch.cat([x for x,y in minibatches])
         all_y = torch.cat([y for x,y in minibatches])
@@ -865,7 +869,12 @@ class SD(ERM):
 
         loss = F.cross_entropy(all_p, all_y)
         penalty = (all_p ** 2).mean()
-        objective = loss + self.sd_reg * penalty
+
+        objective = 0
+        if self.update_count >= self.anneal_iter:
+            objective = self.sd_reg * (loss + penalty)
+        else:
+            objective = loss + self.sd_reg * penalty
 
         self.optimizer.zero_grad()
         objective.backward()
@@ -884,7 +893,7 @@ class ANDMask(ERM):
         super(ANDMask, self).__init__(input_shape, num_classes, num_domains, hparams)
 
         self.tau = hparams["tau"]
-        self.anneal_iter = hparams["ANDMask_anneal_iter"]
+        self.anneal_iter = hparams["anneal_iter"]
 
         self.register_buffer('update_count', torch.tensor([0]))
 
@@ -943,7 +952,7 @@ class IGA(ERM):
         super(IGA, self).__init__(in_features, num_classes, num_domains, hparams)
 
         self.penalty_weight = self.hparams['penalty']
-        self.anneal_iter = hparams["IGA_anneal_iter"]
+        self.anneal_iter = hparams["anneal_iter"]
 
         self.register_buffer('update_count', torch.tensor([0]))
 
@@ -974,9 +983,15 @@ class IGA(ERM):
         for grad in grads:
             for g, mean_g in zip(grad, mean_grad):
                 penalty_value += (g - mean_g).pow(2).sum()
+        
+        loss = mean_loss + penalty_weight * penalty_value
+
+        ## Rescaling loss
+        if penalty_weight >= 1.0:
+            loss /= penalty_weight
 
         self.optimizer.zero_grad()
-        (mean_loss + penalty_weight * penalty_value).backward()
+        loss.backward()
         self.optimizer.step()
         self.update_count += 1
 

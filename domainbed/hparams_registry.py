@@ -28,7 +28,7 @@ def _hparams(algorithm, dataset, random_seed):
 
     # Unconditional hparam definitions.
 
-    _hparam('data_augmentation', True, lambda r: True)
+    _hparam('data_augmentation', False, lambda r: True)
     _hparam('resnet18', False, lambda r: False)
     _hparam('resnet_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
     _hparam('class_balanced', False, lambda r: False)
@@ -55,7 +55,7 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('sag_w_adv', 0.1, lambda r: 10**r.uniform(-2, 1))
 
     elif algorithm == "IRM":
-        _hparam('irm_lambda', 1e2, lambda r: 10**r.uniform(-1, 5))
+        _hparam('irm_lambda', 1e4, lambda r: 10**r.uniform(-1, 5))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "Mixup":
@@ -74,19 +74,19 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('mtl_ema', .99, lambda r: r.choice([0.5, 0.9, 0.99, 1.]))
 
     elif algorithm == "VREx":
-        _hparam('vrex_lambda', 1e1, lambda r: 10**r.uniform(-1, 5))
+        _hparam('vrex_lambda', 1e4, lambda r: 10**r.uniform(-1, 5))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "SD":
-        _hparam('sd_reg', 0.1, lambda r: 10**r.uniform(-5, -1))
+        _hparam('sd_reg', 0.00002, lambda r: 10**r.uniform(-5, -1))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "ANDMask":
-        _hparam('tau', 1, lambda r: r.uniform(0.5, 1.))
+        _hparam('tau', 0.9, lambda r: r.uniform(0.5, 1.))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "IGA":
-        _hparam('penalty', 1000, lambda r: 10**r.uniform(1, 5))
+        _hparam('penalty', 1e4, lambda r: 10**r.uniform(1, 5))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
 
@@ -113,13 +113,13 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('mlp_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
 
     if dataset in SMALL_IMAGES:
-        _hparam('batch_size', 64, lambda r: int(2**r.uniform(3, 9)) )
+        _hparam('batch_size', 512, lambda r: int(2**r.uniform(3, 9)) )
     elif algorithm == 'ARM':
         _hparam('batch_size', 8, lambda r: 8)
     elif dataset == 'DomainNet':
         _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5)) )
     elif dataset in NON_IMAGES:
-        _hparam('batch_size', 256, lambda r: int(2**r.uniform(3, 5.5)) )
+        _hparam('batch_size', 512, lambda r: int(2**r.uniform(3, 5.5)) )
     else:
         _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5.5)) )
 

@@ -71,10 +71,10 @@ Train a model:
 
 ```sh
 python3 -m domainbed.scripts.train\
-       --data_dir=./domainbed/data/MNIST/\
-       --algorithm IGA\
+       --data_dir=~/Documents/Data/MNIST\
+       --algorithm SD\
        --dataset ColoredMNIST\
-       --test_env 2
+       --test_env 0
 ```
 
 Launch a sweep:
@@ -91,7 +91,7 @@ python3 -m domainbed.scripts.sweep launch\
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm ERM ANDMask IRM IGA VREx\
        --dataset Spirals ColoredMNIST\
-       --data_dir ./domainbed/data/\
+       --data_dir ./../../Data/MNIST\
        --output_dir=./misc/test_anneal_sweep/\
        --command_launcher local
 ```
@@ -122,8 +122,12 @@ After all jobs have either succeeded or failed, you can delete the data from fai
 To view the results of your sweep:
 
 ````sh
-python -m domainbed.scripts.collect_results\
-       --input_dir=./domainbed/misc/test_sweep_data/
+python3 -m domainbed.scripts.collect_results\
+       --input_dir=./results/1/
+````
+````sh
+python3 -m domainbed.scripts.plot_results\
+       --input_dir=/home/jcaudet/Documents/Results/OOD_scheduling
 ````
 ````sh
 python3 -m domainbed.scripts.list_top_hparams\
@@ -150,3 +154,39 @@ DATA_DIR=/my/datasets/path python -m unittest discover
 ## License
 
 This source code is released under the MIT license, included [here](LICENSE).
+
+
+## Thrash
+python3 -m domainbed.scripts.anneal_sweep launch\
+       --algorithm ERM SD ANDMask IRM IGA VREx\
+       --dataset ColoredMNIST\
+       --data_dir ~/Documents/Data/MNIST\
+       --output_dir ./misc/3/\
+       --command_launcher multi_gpu\
+	   --steps 10000\
+	   --skip_confirmation\
+	   --n_trials 5\
+	   --n_anneal 40
+
+python3 -m domainbed.scripts.anneal_sweep launch\
+        --algorithm VREx\
+        --dataset ColoredMNIST\
+        --data_dir ~/Documents/Data/MNIST\
+        --data_dir $SLURM_TMPDIR/MNIST/\
+        --output_dir $SLURM_TMPDIR/misc/3/\
+       --command_launcher multi_gpu\
+        --steps 2000\
+        --skip_confirmation\
+        --n_trials 5\
+        --n_anneal 40
+
+python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
+       --algorithm ERM SD ANDMask IRM IGA VREx\
+       --data_dir $SLURM_TMPDIR/MNIST/\
+       --output_dir $SLURM_TMPDIR/misc/3/\
+       --output_dir ./misc/3/\
+       --command_launcher local\
+	   --steps 600\
+	   --skip_confirmation\
+	   --n_trials 5\
+	   --n_anneal 40

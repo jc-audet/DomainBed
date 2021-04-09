@@ -66,7 +66,7 @@ def make_args_list(n_trials, dataset_names, algorithms, n_anneal, steps,
                         train_args['task'] = task 
                         train_args['trial_seed'] = trial_seed
                         train_args['seed'] = misc.seed_hash(dataset,
-                            algorithm, test_envs, train_args['hparams_seed'], trial_seed)
+                            algorithm, test_envs, train_args['hparams_seed']+n, trial_seed)
                         if steps is not None:
                             train_args['steps'] = steps
                             train_args['anneal_iter'] = int(n * (steps / n_anneal))

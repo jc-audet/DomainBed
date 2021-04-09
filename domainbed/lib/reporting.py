@@ -21,7 +21,6 @@ def load_records(path):
                     records.append(json.loads(line[:-1]))
         except IOError:
             pass
-
     return Q(records)
 
 def get_grouped_records(records):
@@ -38,3 +37,4 @@ def get_grouped_records(records):
             result[group].append(r)
     return Q([{"trial_seed": t, "dataset": d, "algorithm": a, "test_env": e,
         "records": Q(r)} for (t,d,a,e),r in result.items()])
+

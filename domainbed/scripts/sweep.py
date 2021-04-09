@@ -48,9 +48,6 @@ class Job:
             command.append(f'--{k} {v}')
         self.command_str = ' '.join(command)
 
-        print(os.path.exists(self.output_dir))
-        print(self.output_dir)
-
         if os.path.exists(os.path.join(self.output_dir, 'done')):
             self.state = Job.DONE
         elif os.path.exists(self.output_dir):
