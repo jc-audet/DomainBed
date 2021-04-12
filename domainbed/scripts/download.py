@@ -122,7 +122,7 @@ def download_vlcs(data_dir, download):
         download_and_extract("https://drive.google.com/uc?id=1skwblH1_okBwxWxmRsp9_qi15hyPpxg8",
                          os.path.join(data_dir, "VLCS.tar.gz"))
     else:
-        download_and_extract(os.path.join(data_dir, "VLCS.tar.gz"))
+        extract(os.path.join(data_dir, "VLCS.tar.gz"))
 
 
 # MNIST #######################################################################

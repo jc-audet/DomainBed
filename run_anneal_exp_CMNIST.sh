@@ -22,7 +22,7 @@ cp -r $SCRATCH/data/MNIST $SLURM_TMPDIR
 cd $HOME/GitRepos/DomainBed/
 python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
        --algorithm ERM SD ANDMask IRM IGA VREx\
-       --dataset MNIST\
+       --dataset ColoredMNIST\
        --data_dir $SLURM_TMPDIR/MNIST/\
        --output_dir $SLURM_TMPDIR/misc/MNIST_results/\
        --command_launcher multi_gpu\
@@ -34,7 +34,7 @@ python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
 	
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm ERM SD ANDMask IRM IGA VREx\
-       --dataset MNIST\
+       --dataset ColoredMNIST\
        --data_dir $SLURM_TMPDIR/MNIST/\
        --output_dir $SLURM_TMPDIR/misc/MNIST_results/\
        --command_launcher multi_gpu\

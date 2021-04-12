@@ -85,6 +85,15 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('tau', 0.9, lambda r: r.uniform(0.5, 1.))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
+    elif algorithm == "VARMaskv1":
+        _hparam('tau', 0.9, lambda r: r.uniform(0.5, 1.))
+        _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
+
+    elif algorithm == "VARMaskv2":
+        _hparam('tau', 0.9, lambda r: r.uniform(0.5, 1.))
+        _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
+        _hparam('beta', 1, lambda r: 10**r.choice([-3., -2., -1., 0., 1., 2., 3.]))
+
     elif algorithm == "IGA":
         _hparam('penalty', 1e4, lambda r: 10**r.uniform(1, 5))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))

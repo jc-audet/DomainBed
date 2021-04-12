@@ -48,12 +48,9 @@ def make_args_list(n_trials, dataset_names, algorithms, n_anneal, steps,
                 if dataset in ['Spirals', 'ColoredMNIST']:
                     all_test_envs = [0]
                 else:
-                    if single_test_envs:
-                        all_test_envs = [
-                            [i] for i in range(datasets.num_environments(dataset))]
-                    else:
-                        all_test_envs = all_test_env_combinations(
-                            datasets.num_environments(dataset))
+                    all_test_envs = [
+                        [i] for i in range(datasets.num_environments(dataset))]
+                        
                 for test_envs in all_test_envs:
                     for n in range(n_anneal):
                         train_args = {}

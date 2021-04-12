@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,12 +53,25 @@ class ResNet(torch.nn.Module):
     """ResNet with the softmax chopped off and the batchnorm frozen"""
     def __init__(self, input_shape, hparams):
         super(ResNet, self).__init__()
-        if hparams['resnet18']:
-            self.network = torchvision.models.resnet18(pretrained=True)
-            self.n_outputs = 512
-        else:
-            self.network = torchvision.models.resnet50(pretrained=True)
-            self.n_outputs = 2048
+
+        #Big and ugly fix for running on the cluster without access to networks
+        try:
+            if hparams['resnet18']:
+                self.network = torchvision.models.resnet18(pretrained=True)
+                self.n_outputs = 512
+            else:
+                self.network = torchvision.models.resnet50(pretrained=True)
+                self.n_outputs = 2048
+        except:
+            path = "./pretrained_models/"
+            if hparams['resnet18']:
+                self.network = torchvision.models.resnet18(pretrained=False)
+                self.network.load_state_dict(torch.load(os.path.join(path,'resnet18')))
+                self.n_outputs = 512
+            else:
+                self.network = torchvision.models.resnet50(pretrained=False)
+                self.network.load_state_dict(torch.load(os.path.join(path,'resnet50')))
+                self.n_outputs = 2048
 
         # adapt number of channels
         nc = input_shape[0]

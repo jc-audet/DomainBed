@@ -30,7 +30,7 @@ python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
 	--n_anneal 20
 
 python3 -m domainbed.scripts.anneal_sweep launch\
-       --algorithm ERM SD ANDMask IRM IGA VREx\
+       --algorithm ERM ANDMask\
        --dataset Spirals\
        --data_dir $SLURM_TMPDIR/MNIST/\
        --output_dir $SLURM_TMPDIR/misc/spirals/\
