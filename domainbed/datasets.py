@@ -301,35 +301,35 @@ class MultipleEnvironmentImageFolder(MultipleDomainDataset):
         self.num_classes = len(self.datasets[-1].classes)
 
 class VLCS(MultipleEnvironmentImageFolder):
-    CHECKPOINT_FREQ = 300
+    CHECKPOINT_FREQ = 50
     ENVIRONMENTS = ["C", "L", "S", "V"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "VLCS/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class PACS(MultipleEnvironmentImageFolder):
-    CHECKPOINT_FREQ = 300
+    CHECKPOINT_FREQ = 50
     ENVIRONMENTS = ["A", "C", "P", "S"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "PACS/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class DomainNet(MultipleEnvironmentImageFolder):
-    CHECKPOINT_FREQ = 1000
+    CHECKPOINT_FREQ = 500
     ENVIRONMENTS = ["clip", "info", "paint", "quick", "real", "sketch"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "domain_net/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class OfficeHome(MultipleEnvironmentImageFolder):
-    CHECKPOINT_FREQ = 300
+    CHECKPOINT_FREQ = 50
     ENVIRONMENTS = ["A", "C", "P", "R"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "office_home/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class TerraIncognita(MultipleEnvironmentImageFolder):
-    CHECKPOINT_FREQ = 300
+    CHECKPOINT_FREQ = 50
     ENVIRONMENTS = ["L100", "L38", "L43", "L46"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "terra_incognita/")

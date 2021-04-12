@@ -64,7 +64,8 @@ Download the datasets:
 
 ```sh
 python3 -m domainbed.scripts.download \
-       --data_dir=./domainbed/data
+       --data_dir=/home/jcaudet/Downloads/\
+       --dataset=PACS
 ```
 
 Train a model:
@@ -90,8 +91,8 @@ python3 -m domainbed.scripts.sweep launch\
 ```sh
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm ERM ANDMask IRM IGA VREx\
-       --dataset Spirals ColoredMNIST\
-       --data_dir ./../../Data/MNIST\
+       --dataset PACS\
+       --data_dir ./../../Data/\
        --output_dir=./misc/test_anneal_sweep/\
        --command_launcher local
 ```

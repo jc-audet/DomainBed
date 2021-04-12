@@ -1,18 +1,19 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from torchvision.datasets import MNIST
+from torchvision.datasets import MNIST, CelebA
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 import argparse
 import tarfile
 import shutil
-import gdown
+# import gdown
 import uuid
 import json
 import os
 
-from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
-from wilds.datasets.fmow_dataset import FMoWDataset 
+# from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
+# from wilds.datasets.fmow_dataset import FMoWDataset 
+# from wilds.datasets.iwildcam_dataset import  IWildCamDataset
 
 
 # utils #######################################################################
@@ -47,6 +48,25 @@ def download_and_extract(url, dst, remove=True):
     if remove:
         os.remove(dst)
 
+def extract(dst, remove=True):
+
+    if dst.endswith(".tar.gz"):
+        tar = tarfile.open(dst, "r:gz")
+        tar.extractall(os.path.dirname(dst))
+        tar.close()
+
+    if dst.endswith(".tar"):
+        tar = tarfile.open(dst, "r:")
+        tar.extractall(os.path.dirname(dst))
+        tar.close()
+
+    if dst.endswith(".zip"):
+        zf = ZipFile(dst, "r")
+        zf.extractall(os.path.dirname(dst))
+        zf.close()
+
+    if remove:
+        os.remove(dst)
 
 # VLCS ########################################################################
 
@@ -94,17 +114,20 @@ def download_and_extract(url, dst, remove=True):
 #     shutil.rmtree(tmp_path)
 
 
-def download_vlcs(data_dir):
+def download_vlcs(data_dir, download):
     # Original URL: http://www.eecs.qmul.ac.uk/~dl307/project_iccv2017
     full_path = stage_path(data_dir, "VLCS")
 
-    download_and_extract("https://drive.google.com/uc?id=1skwblH1_okBwxWxmRsp9_qi15hyPpxg8",
+    if download:
+        download_and_extract("https://drive.google.com/uc?id=1skwblH1_okBwxWxmRsp9_qi15hyPpxg8",
                          os.path.join(data_dir, "VLCS.tar.gz"))
+    else:
+        download_and_extract(os.path.join(data_dir, "VLCS.tar.gz"))
 
 
 # MNIST #######################################################################
 
-def download_mnist(data_dir):
+def download_mnist(data_dir, download):
     # Original URL: http://yann.lecun.com/exdb/mnist/
     full_path = stage_path(data_dir, "MNIST")
     MNIST(full_path, download=True)
@@ -112,12 +135,15 @@ def download_mnist(data_dir):
 
 # PACS ########################################################################
 
-def download_pacs(data_dir):
+def download_pacs(data_dir, download):
     # Original URL: http://www.eecs.qmul.ac.uk/~dl307/project_iccv2017
     full_path = stage_path(data_dir, "PACS")
 
-    download_and_extract("https://drive.google.com/uc?id=0B6x7gtvErXgfbF9CSk53UkRxVzg",
+    if download:
+        download_and_extract("https://drive.google.com/uc?id=0B6x7gtvErXgfbF9CSk53UkRxVzg",
                          os.path.join(data_dir, "PACS.zip"))
+    else:
+        extract(os.path.join(data_dir, "PACS.zip"))
 
     os.rename(os.path.join(data_dir, "kfold"),
               full_path)
@@ -125,7 +151,7 @@ def download_pacs(data_dir):
 
 # Office-Home #################################################################
 
-def download_office_home(data_dir):
+def download_office_home(data_dir, download):
     # Original URL: http://hemanthdv.org/OfficeHome-Dataset/
     full_path = stage_path(data_dir, "office_home")
 
@@ -138,7 +164,7 @@ def download_office_home(data_dir):
 
 # DomainNET ###################################################################
 
-def download_domain_net(data_dir):
+def download_domain_net(data_dir, download):
     # Original URL: http://ai.bu.edu/M3SDA/
     full_path = stage_path(data_dir, "domain_net")
 
@@ -164,17 +190,22 @@ def download_domain_net(data_dir):
 
 # TerraIncognita ##############################################################
 
-def download_terra_incognita(data_dir):
+def download_terra_incognita(data_dir, download):
     # Original URL: https://beerys.github.io/CaltechCameraTraps/
     full_path = stage_path(data_dir, "terra_incognita")
        
-    download_and_extract(
-        "http://www.vision.caltech.edu/~sbeery/datasets/caltechcameratraps18/eccv_18_all_images_sm.tar.gz",
-        os.path.join(full_path, "terra_incognita_images.tar.gz"))
-    
-    download_and_extract(
-        "http://www.vision.caltech.edu/~sbeery/datasets/caltechcameratraps18/eccv_18_all_annotations.tar.gz",
-        os.path.join(full_path, "terra_incognita_annotations.tar.gz"))
+    if download:
+        download_and_extract(
+            "http://www.vision.caltech.edu/~sbeery/datasets/caltechcameratraps18/eccv_18_all_images_sm.tar.gz",
+            os.path.join(full_path, "terra_incognita_images.tar.gz"))
+        
+        download_and_extract(
+            "http://www.vision.caltech.edu/~sbeery/datasets/caltechcameratraps18/eccv_18_all_annotations.tar.gz",
+            os.path.join(full_path, "terra_incognita_annotations.tar.gz"))
+    else:
+        extract(os.path.join(full_path, "terra_incognita_images.tar.gz"))
+        
+        extract(os.path.join(full_path, "terra_incognita_annotations.tar.gz"))
 
     include_locations = [38, 46, 100, 43]
 
@@ -245,7 +276,7 @@ def download_terra_incognita(data_dir):
 
 # SVIRO #################################################################
 
-def download_sviro(data_dir):
+def download_sviro(data_dir, download):
     # Original URL: https://sviro.kl.dfki.de
     full_path = stage_path(data_dir, "sviro")
     
@@ -259,14 +290,24 @@ def download_sviro(data_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download datasets')
     parser.add_argument('--data_dir', type=str, required=True)
+    parser.add_argument('--dataset', type=str, choices=['MNIST', 'PACS', 'VLCS', 'TERRA'], required=True)
+    parser.add_argument('--download', action='store_true')
     args = parser.parse_args()
 
-    download_mnist(args.data_dir)
-    # download_pacs(args.data_dir)
+    if args.dataset == 'MNIST':
+        download_mnist(args.data_dir, args.download)
+    elif args.dataset == 'PACS':
+        download_pacs(args.data_dir, args.download)
+    elif args.dataset == 'VLCS':
+        download_vlcs(args.data_dir, args.download)
+    elif args.dataset == 'TERRA':
+        download_terra_incognita(args.data_dir, args.download)
+
+
     # download_office_home(args.data_dir)
     # download_domain_net(args.data_dir)
-    # download_vlcs(args.data_dir)
-    # download_terra_incognita(args.data_dir)
     # download_sviro(args.data_dir)
     # Camelyon17Dataset(root_dir=args.data_dir, download=True)
     # FMoWDataset(root_dir=args.data_dir, download=True)
+    # IWildCamDataset(root_dir=args.data_dir, download=True)
+    # CelebA(args.data_dir, download=True)

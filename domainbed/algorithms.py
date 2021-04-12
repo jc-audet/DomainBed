@@ -927,6 +927,50 @@ class ANDMask(ERM):
 
         return {'loss': mean_loss.item()}
 
+class VARMask(ERM):
+    """
+    Learning Explanations that are Hard to Vary [https://arxiv.org/abs/2009.00329]
+    AND-Mask implementation from [https://github.com/gibipara92/learning-explanations-hard-to-vary]
+    """
+
+    def __init__(self, input_shape, num_classes, num_domains, hparams):
+        super(VARMask, self).__init__(input_shape, num_classes, num_domains, hparams)
+
+        self.tau = hparams["tau"]
+        self.anneal_iter = hparams["anneal_iter"]
+
+        self.register_buffer('update_count', torch.tensor([0]))
+
+    def update(self, minibatches, unlabeled=None):
+        
+        total_loss = 0
+        param_gradients = [[] for _ in self.network.parameters()]
+        all_x = torch.cat([x for x,y in minibatches])
+        all_logits = self.network(all_x)
+        all_logits_idx = 0
+        for i, (x, y) in enumerate(minibatches):
+            logits = all_logits[all_logits_idx:all_logits_idx + x.shape[0]]
+            all_logits_idx += x.shape[0]
+            
+            env_loss = F.cross_entropy(logits, y)
+            total_loss += env_loss
+
+            env_grads = autograd.grad(env_loss, self.network.parameters(), retain_graph=True)
+            for grads, env_grad in zip(param_gradients, env_grads):
+                grads.append(env_grad)
+            
+        mean_loss = total_loss / len(minibatches)
+
+        self.optimizer.zero_grad()
+        if self.update_count >= self.anneal_iter:
+            self.mask_grads(self.tau, param_gradients, self.network.parameters())
+        else:
+            mean_loss.backward()
+        self.optimizer.step()
+        self.update_count += 1
+
+        return {'loss': mean_loss.item()}
+
     def mask_grads(self, tau, gradients, params):
 
         for param, grads in zip(params, gradients):

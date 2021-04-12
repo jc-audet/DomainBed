@@ -32,7 +32,7 @@ class MLP(nn.Module):
         self.input = nn.Linear(n_inputs, hparams['mlp_width'])
         self.dropout = nn.Dropout(hparams['mlp_dropout'])
         self.hiddens = nn.ModuleList([
-            nn.Linear(hparams['mlp_width'],hparams['mlp_width'])
+            nn.Linear(hparams['mlp_width'], hparams['mlp_width'])
             for _ in range(hparams['mlp_depth']-2)])
         self.output = nn.Linear(hparams['mlp_width'], n_outputs)
         self.n_outputs = n_outputs
