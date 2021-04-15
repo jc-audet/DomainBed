@@ -184,6 +184,8 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
         return TensorDataset(x, y)
 
 class CFMNIST:
+    ENVIRONMENTS = [str(i) for i in range(2)]
+
     def __init__(self, n_tr=1000):
         D = tf.keras.datasets.mnist.load_data()
         n_tr_total = D[0][0].shape[0]
