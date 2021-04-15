@@ -9,6 +9,10 @@ import torchvision.datasets.folder
 from torch.utils.data import TensorDataset, Subset
 from torchvision.datasets import MNIST, ImageFolder
 from torchvision.transforms.functional import rotate
+import copy as cp
+from sklearn.model_selection import KFold
+import tensorflow as tf
+
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
 # from wilds.datasets.fmow_dataset import FMoWDataset
@@ -22,6 +26,7 @@ DATASETS = [
     # Small images
     "ColoredMNIST",
     "RotatedMNIST",
+    "CFMNIST",
     # Big images
     "VLCS",
     "PACS",
@@ -177,6 +182,102 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
         y = labels.view(-1)
 
         return TensorDataset(x, y)
+
+class CFMNIST:
+    def __init__(self, n_tr=1000):
+        D = tf.keras.datasets.mnist.load_data()
+        n_tr_total = D[0][0].shape[0]
+        print(n_tr_total)
+        ind_tr = np.random.choice(n_tr_total, n_tr)
+        x_train = D[0][0][ind_tr].astype(float)
+        # y_train=OneHotEncoder.fit_transform(y_train)
+        x_test = D[1][0].astype(float)
+        # y_test=OneHotEncoder.fit_transform(y_train)
+        num_train = x_train.shape[0]
+        self.x_train_mnist = x_train.reshape((num_train, 28, 28, 1))
+        self.y_train_mnist = D[0][1][ind_tr].reshape((num_train, 1))
+        num_test = x_test.shape[0]
+        self.x_test_mnist = x_test.reshape((num_test, 28, 28, 1))
+        self.y_test_mnist = D[1][1].reshape((num_test, 1))
+        self.n_tr = n_tr
+        n_e = 2
+        p_color_list = [0.2, 0.1]
+        p_label_list = [0.25] * n_e
+        p_label_test = 0.25  # probability of switching pre-label in test environment
+        p_color_test = 0.9  # probability of switching the final label to obtain the color index in test environment
+        trainset = self.create_training_data(n_e,p_color_list,p_label_list)
+        testset= self.create_testing_data(p_color_test,p_label_test,n_e)
+        self.datasets = []
+        self.datasets.append(testset)
+        for x in trainset:
+            self.datasets.append(x)
+
+
+
+    def create_environment(self, env_index, x, y, prob_e, prob_label):
+        # Convert y>5 to 1 and y<5 to 0.
+        y = (y >= 5).astype(int)
+        num_samples = len(y)
+        h = np.random.binomial(1, prob_label, (num_samples, 1))
+        h1 = np.random.binomial(1, prob_e, (num_samples, 1))
+        y_mod = np.abs(y - h)
+        z = np.logical_xor(h1, h)
+
+        red = np.where(z == 1)[0]
+        print(red.shape)
+        tsh = 0.0
+        chR = cp.deepcopy(x[red, :])
+        chR[chR > tsh] = 1
+        chG = cp.deepcopy(x[red, :])
+        chG[chG > tsh] = 0
+        chB = cp.deepcopy(x[red, :])
+        chB[chB > tsh] = 0
+        r = np.concatenate((chR, chG), axis=3)
+
+        green = np.where(z == 0)[0]
+        print(green.shape)
+        tsh = 0.0
+        chR1 = cp.deepcopy(x[green, :])
+        chR1[chR1 > tsh] = 0
+        chG1 = cp.deepcopy(x[green, :])
+        chG1[chG1 > tsh] = 1
+        chB1 = cp.deepcopy(x[green, :])
+        chB1[chB1 > tsh] = 0
+        g = np.concatenate((chR1, chG1), axis=3)
+
+        dataset = np.concatenate((r, g), axis=0)
+        labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
+
+        return (dataset, labels, np.ones((num_samples, 1)) * env_index)
+
+    def create_training_data(self, n_e, corr_list, p_label_list):
+        x_train_mnist = self.x_train_mnist
+        y_train_mnist = self.y_train_mnist
+        n_tr = self.n_tr
+        ind_X = range(0, n_tr)
+        kf = KFold(n_splits=n_e, shuffle=True)
+        l = 0
+        ind_list = []
+        for train, test in kf.split(ind_X):
+            ind_list.append(test)
+            l = l + 1
+        data_tuple_list = []
+        for l in range(n_e):
+            data_tuple_list.append(
+                self.create_environment(l, x_train_mnist[ind_list[l], :, :, :], y_train_mnist[ind_list[l], :],
+                                        corr_list[l], p_label_list[l]))
+
+        self.data_tuple_list = data_tuple_list
+        return self.data_tuple_list
+
+    def create_testing_data(self, corr_test, prob_label, n_e):
+        x_test_mnist = self.x_test_mnist
+        y_test_mnist = self.y_test_mnist
+        (x_test, y_test, e_test) = self.create_environment(n_e, x_test_mnist, y_test_mnist, corr_test, prob_label)
+
+        self.data_tuple_test = (x_test, y_test, e_test)
+        return self.data_tuple_test
+
 
 class Spirals(MultipleDomainDataset):
     CHECKPOINT_FREQ = 10
