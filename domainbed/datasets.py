@@ -124,7 +124,7 @@ class MultipleEnvironmentMNIST(MultipleDomainDataset):
 
 
 class ColoredMNIST(MultipleEnvironmentMNIST):
-    ENVIRONMENTS = ['+90%', '+80%', '-90%']
+    ENVIRONMENTS = ['-90%', '+90%', '+80%']
 
     def __init__(self, root, test_envs, hparams):
         super(ColoredMNIST, self).__init__(root, [0.9, 0.1, 0.2],
@@ -163,10 +163,10 @@ class ColoredMNIST(MultipleEnvironmentMNIST):
         return (a - b).abs()
 
 class CFMNIST(MultipleEnvironmentMNIST):
-    ENVIRONMENTS = ['0.2','0.1','0.9']
+    ENVIRONMENTS = ['0.9', '0.2','0.1']
 
     def __init__(self, root, test_envs, hparams):
-        super(CFMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+        super(CFMNIST, self).__init__(root, [0.9, 0.2, 0.1],
                                          self.color_dataset, (2, 28, 28,), 2)
 
         self.input_shape = (2, 28, 28,)
@@ -218,10 +218,10 @@ class CFMNIST(MultipleEnvironmentMNIST):
         return (a - b).abs()
 
 class ACMNIST(MultipleEnvironmentMNIST):
-    ENVIRONMENTS = ['0.2','0.1','0.9']
+    ENVIRONMENTS = ['0.9', '0.2','0.1']
 
     def __init__(self, root, test_envs, hparams):
-        super(ACMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+        super(ACMNIST, self).__init__(root, [0.9, 0.2, 0.1],
                                          self.color_dataset, (2, 28, 28,), 2)
 
         self.input_shape = (2, 28, 28,)
@@ -272,10 +272,10 @@ class ACMNIST(MultipleEnvironmentMNIST):
         return (a - b).abs()
 
 class CSMNIST(MultipleEnvironmentMNIST):
-    ENVIRONMENTS = ['0.2','0.1','0.9']
+    ENVIRONMENTS = ['0.9', '0.2','0.1']
 
     def __init__(self, root, test_envs, hparams):
-        super(CSMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+        super(CSMNIST, self).__init__(root, [0.9, 0.2, 0.1],
                                          self.color_dataset, (2, 28, 28,), 2)
 
         self.input_shape = (3, 28, 28,)
