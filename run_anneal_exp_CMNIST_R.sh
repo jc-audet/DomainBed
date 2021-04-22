@@ -12,8 +12,8 @@
 module load python/3.6
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
-pip3 install --no-index torch torchvision
-pip3 install --no-index tqdm
+pip3 install torch torchvision
+pip3 install tqdm
 
 cd $HOME/DomainBed/
 
