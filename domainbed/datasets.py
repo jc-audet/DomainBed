@@ -153,9 +153,6 @@ class ColoredMNIST(MultipleEnvironmentMNIST):
 
         x = images.float().div_(255.0)
         y = labels.view(-1).long()
-        print(x.shape)
-        print(y.shape)
-        print(labels.shape)
 
         return TensorDataset(x, y)
 
@@ -180,20 +177,16 @@ class CFMNIST(MultipleEnvironmentMNIST):
         # Convert y>5 to 1 and y<5 to 0.
         self.p_label = 0.25
         y = (labels >= 5).float()
-        print("y",y.shape)
+
         num_samples = len(y)
         h = np.random.binomial(1, self.p_label, (num_samples, 1))
-        print("h",h.shape)
         h1 = np.random.binomial(1, environment, (num_samples, 1))
         y_mod = np.abs(y.unsqueeze(1) - h)
-        print(y_mod.shape)
         z = np.logical_xor(h1, h)
 
         red = np.where(z == 1)[0]
-        print(red.shape)
         tsh = 0.0
         chR = cp.deepcopy(images[red, :])
-        print(images.shape)
         chR[chR > tsh] = 1
         chG = cp.deepcopy(images[red, :])
         chG[chG > tsh] = 0
@@ -202,7 +195,6 @@ class CFMNIST(MultipleEnvironmentMNIST):
         r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
 
         green = np.where(z == 0)[0]
-        print(green.shape)
         tsh = 0.0
         chR1 = cp.deepcopy(images[green, :])
         chR1[chR1 > tsh] = 0
@@ -212,22 +204,11 @@ class CFMNIST(MultipleEnvironmentMNIST):
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
 
-        # dataset = np.concatenate((r, g), axis=0)
-        # dataset = torch.tensor(dataset, dtype=torch.float32)
-        # labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-        # dataset = torch.swapaxes(dataset,2,3)
-        # dataset = torch.swapaxes(dataset,1,2)
-        # print("Is this it?",dataset.shape)
-        # print("LABELS",labels.shape)
-        # labels = torch.argmax(torch.tensor(labels, dtype=torch.long), dim=1).long()
-        # print(labels.shape)
         dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
-        print(dataset.shape)
 
         labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long), 1)
 
-        print("LABELS", labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
@@ -253,20 +234,13 @@ class ACMNIST(MultipleEnvironmentMNIST):
         self.p_label = 0.25
         y = (labels >= 5).float()
         num_samples = len(y)
-        print("YSHAPED",y.shape)
 
         y_mod = np.abs(y.unsqueeze(1) - np.random.binomial(1, self.p_label, (num_samples, 1)))
-        print("YMOD",y_mod.shape)
         z = np.abs(y_mod - np.random.binomial(1, environment, (num_samples, 1)))
-        print("ZSHAPE",z.shape)
-        print("stuck0")
-        print(images.shape)
         red = np.where(z == 1)[0]
-        print("RED",red.shape)
 
         tsh = 0.0
         chR = cp.deepcopy(images[red, :])
-        #        chR = cp.deepcopy(images[red, :])
         chR[chR > tsh] = 1
         chG = cp.deepcopy(images[red, :])
         chG[chG > tsh] = 0
@@ -286,11 +260,9 @@ class ACMNIST(MultipleEnvironmentMNIST):
 
         dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
-        print(dataset.shape)
 
         labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long),1)
 
-        print("LABELS",labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
@@ -318,19 +290,13 @@ class CSMNIST(MultipleEnvironmentMNIST):
         y = (labels >= 5).float()
 
         num_samples = len(y)
-        print("YSHAPE",y.shape)
         z_color = np.random.binomial(1, 0.5, (num_samples, 1))  # sample color for each sample
-        print("ZCOLOR",z_color.shape)
         w_comb = 1 - np.logical_xor(y.unsqueeze(1), z_color)  # compute xor of label and color and negate it
-        print("WCOMB", w_comb.shape)
 
         selection_0 = np.where(w_comb == 0)[0]  # indices where -xor is zero
-        print("Select0", selection_0.shape)
         selection_1 = np.where(w_comb == 1)[0]  # indices were -xor is one
-        print("Select1", selection_1.shape)
         ns0 = np.shape(selection_0)[0]
         ns1 = np.shape(selection_1)[0]
-        print("Stuck1.25")
         final_selection_0 = selection_0[np.where(np.random.binomial(1, environment, (ns0, 1)) == 1)[
             0]]  # -xor =0 then select that point with probability prob_e
         final_selection_1 = selection_1[np.where(np.random.binomial(1, 1 - environment, (ns1, 1)) == 1)[
@@ -338,7 +304,6 @@ class CSMNIST(MultipleEnvironmentMNIST):
 
         final_selection = np.concatenate((final_selection_0, final_selection_1),
                                          axis=0)  # indices of the final set of points selected
-        print("stuck1.5")
         z_color_final = z_color[final_selection]  # colors of the final set of selected points
         y = y[final_selection]  # labels of the final set of selected points
         images = images[final_selection]  # gray scale image of the final set of selected points
@@ -370,7 +335,6 @@ class CSMNIST(MultipleEnvironmentMNIST):
         dataset = np.transpose(np.concatenate((r, g), axis=0), (0,3,1,2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
         labels = torch.tensor(np.concatenate((y[red], y[green]), axis=0), dtype=torch.long)
-        print("LABELS",labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
@@ -402,103 +366,6 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
         y = labels.view(-1)
 
         return TensorDataset(x, y)
-
-# class CFMNIST:
-#     ENVIRONMENTS = [str(i) for i in range(2)]
-#
-#     def __init__(self, n_tr=1000):
-#         D = tf.keras.datasets.mnist.load_data()
-#         n_tr_total = D[0][0].shape[0]
-#         print(n_tr_total)
-#         ind_tr = np.random.choice(n_tr_total, n_tr)
-#         x_train = D[0][0][ind_tr].astype(float)
-#         # y_train=OneHotEncoder.fit_transform(y_train)
-#         x_test = D[1][0].astype(float)
-#         # y_test=OneHotEncoder.fit_transform(y_train)
-#         num_train = x_train.shape[0]
-#         self.x_train_mnist = x_train.reshape((num_train, 28, 28, 1))
-#         self.y_train_mnist = D[0][1][ind_tr].reshape((num_train, 1))
-#         num_test = x_test.shape[0]
-#         self.x_test_mnist = x_test.reshape((num_test, 28, 28, 1))
-#         self.y_test_mnist = D[1][1].reshape((num_test, 1))
-#         self.n_tr = n_tr
-#         n_e = 2
-#         p_color_list = [0.2, 0.1]
-#         p_label_list = [0.25] * n_e
-#         p_label_test = 0.25  # probability of switching pre-label in test environment
-#         p_color_test = 0.9  # probability of switching the final label to obtain the color index in test environment
-#         trainset = self.create_training_data(n_e,p_color_list,p_label_list)
-#         testset= self.create_testing_data(p_color_test,p_label_test,n_e)
-#         self.datasets = []
-#         self.datasets.append(testset)
-#         for x in trainset:
-#             self.datasets.append(x)
-#
-#
-#
-#     def create_environment(self, env_index, x, y, prob_e, prob_label):
-#         # Convert y>5 to 1 and y<5 to 0.
-#         y = (y >= 5).astype(int)
-#         num_samples = len(y)
-#         h = np.random.binomial(1, prob_label, (num_samples, 1))
-#         h1 = np.random.binomial(1, prob_e, (num_samples, 1))
-#         y_mod = np.abs(y - h)
-#         z = np.logical_xor(h1, h)
-#
-#         red = np.where(z == 1)[0]
-#         print(red.shape)
-#         tsh = 0.0
-#         chR = cp.deepcopy(x[red, :])
-#         chR[chR > tsh] = 1
-#         chG = cp.deepcopy(x[red, :])
-#         chG[chG > tsh] = 0
-#         chB = cp.deepcopy(x[red, :])
-#         chB[chB > tsh] = 0
-#         r = np.concatenate((chR, chG), axis=3)
-#
-#         green = np.where(z == 0)[0]
-#         print(green.shape)
-#         tsh = 0.0
-#         chR1 = cp.deepcopy(x[green, :])
-#         chR1[chR1 > tsh] = 0
-#         chG1 = cp.deepcopy(x[green, :])
-#         chG1[chG1 > tsh] = 1
-#         chB1 = cp.deepcopy(x[green, :])
-#         chB1[chB1 > tsh] = 0
-#         g = np.concatenate((chR1, chG1), axis=3)
-#
-#         dataset = np.concatenate((r, g), axis=0)
-#         labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-#
-#         return (dataset, labels, np.ones((num_samples, 1)) * env_index)
-#
-#     def create_training_data(self, n_e, corr_list, p_label_list):
-#         x_train_mnist = self.x_train_mnist
-#         y_train_mnist = self.y_train_mnist
-#         n_tr = self.n_tr
-#         ind_X = range(0, n_tr)
-#         kf = KFold(n_splits=n_e, shuffle=True)
-#         l = 0
-#         ind_list = []
-#         for train, test in kf.split(ind_X):
-#             ind_list.append(test)
-#             l = l + 1
-#         data_tuple_list = []
-#         for l in range(n_e):
-#             data_tuple_list.append(
-#                 self.create_environment(l, x_train_mnist[ind_list[l], :, :, :], y_train_mnist[ind_list[l], :],
-#                                         corr_list[l], p_label_list[l]))
-#
-#         self.data_tuple_list = data_tuple_list
-#         return self.data_tuple_list
-#
-#     def create_testing_data(self, corr_test, prob_label, n_e):
-#         x_test_mnist = self.x_test_mnist
-#         y_test_mnist = self.y_test_mnist
-#         (x_test, y_test, e_test) = self.create_environment(n_e, x_test_mnist, y_test_mnist, corr_test, prob_label)
-#
-#         self.data_tuple_test = (x_test, y_test, e_test)
-#         return self.data_tuple_test
 
 
 class Spirals(MultipleDomainDataset):

@@ -74,7 +74,7 @@ Train a model:
 python3 -m domainbed.scripts.train\
        --data_dir=~/Documents/Data/MNIST\
        --algorithm IRM\
-       --dataset CSMNIST\
+       --dataset ACMNIST\
        --test_env 0
 ```
 
