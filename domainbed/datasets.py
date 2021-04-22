@@ -284,8 +284,8 @@ class ACMNIST(MultipleEnvironmentMNIST):
         dataset = torch.swapaxes(dataset, 2, 3)
         dataset = torch.swapaxes(dataset, 1, 2)
         print(dataset.shape)
-        labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-        labels = torch.argmax(torch.tensor(labels,torch.long), dim=1).long()
+        labels = torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long)
+
         print(labels.shape)
         return TensorDataset(dataset,labels)
 
