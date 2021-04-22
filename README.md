@@ -72,9 +72,15 @@ Train a model:
 
 ```sh
 python3 -m domainbed.scripts.train\
+<<<<<<< HEAD
        --data_dir=/home/jcaudet/Documents/Data/\
        --algorithm IRM\
        --dataset ColoredMNIST\
+=======
+       --data_dir=~/Documents/Data/MNIST\
+       --algorithm IRM\
+       --dataset ACMNIST\
+>>>>>>> AddedDataSets
        --test_env 0
 ```
 ## For Ex1 model

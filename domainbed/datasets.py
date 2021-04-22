@@ -10,6 +10,10 @@ from torch.utils.data import TensorDataset, Subset
 from torchvision.datasets import MNIST, ImageFolder
 from torchvision.transforms.functional import rotate
 import pandas as pd
+import copy as cp
+from sklearn.model_selection import KFold
+import tensorflow as tf
+
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
 # from wilds.datasets.fmow_dataset import FMoWDataset
@@ -23,6 +27,9 @@ DATASETS = [
     # Small images
     "ColoredMNIST",
     "RotatedMNIST",
+    "CFMNIST",
+    "ACMNIST",
+    "CSMNIST",
     # Big images
     "VLCS",
     "PACS",
@@ -158,6 +165,188 @@ class ColoredMNIST(MultipleEnvironmentMNIST):
     def torch_xor_(self, a, b):
         return (a - b).abs()
 
+class CFMNIST(MultipleEnvironmentMNIST):
+    ENVIRONMENTS = ['0.2','0.1','0.9']
+
+    def __init__(self, root, test_envs, hparams):
+        super(CFMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+                                         self.color_dataset, (2, 28, 28,), 2)
+
+        self.input_shape = (2, 28, 28,)
+        self.num_classes = 2
+        self.p_label = 0.25
+
+    def color_dataset(self, images, labels, environment):
+        # Convert y>5 to 1 and y<5 to 0.
+        self.p_label = 0.25
+        y = (labels >= 5).float()
+
+        num_samples = len(y)
+        h = np.random.binomial(1, self.p_label, (num_samples, 1))
+        h1 = np.random.binomial(1, environment, (num_samples, 1))
+        y_mod = np.abs(y.unsqueeze(1) - h)
+        z = np.logical_xor(h1, h)
+
+        red = np.where(z == 1)[0]
+        tsh = 0.0
+        chR = cp.deepcopy(images[red, :])
+        chR[chR > tsh] = 1
+        chG = cp.deepcopy(images[red, :])
+        chG[chG > tsh] = 0
+        chB = cp.deepcopy(images[red, :])
+        chB[chB > tsh] = 0
+        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
+
+        green = np.where(z == 0)[0]
+        tsh = 0.0
+        chR1 = cp.deepcopy(images[green, :])
+        chR1[chR1 > tsh] = 0
+        chG1 = cp.deepcopy(images[green, :])
+        chG1[chG1 > tsh] = 1
+        chB1 = cp.deepcopy(images[green, :])
+        chB1[chB1 > tsh] = 0
+        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
+
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
+        dataset = torch.tensor(dataset, dtype=torch.float32)
+
+        labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long), 1)
+
+        return TensorDataset(dataset,labels)
+
+    def torch_bernoulli_(self, p, size):
+        return (torch.rand(size) < p).float()
+
+    def torch_xor_(self, a, b):
+        return (a - b).abs()
+
+class ACMNIST(MultipleEnvironmentMNIST):
+    ENVIRONMENTS = ['0.2','0.1','0.9']
+
+    def __init__(self, root, test_envs, hparams):
+        super(ACMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+                                         self.color_dataset, (2, 28, 28,), 2)
+
+        self.input_shape = (2, 28, 28,)
+        self.num_classes = 2
+        self.p_label = 0.25
+
+
+    def color_dataset(self, images, labels, environment):
+        # Convert y>5 to 1 and y<5 to 0.
+        self.p_label = 0.25
+        y = (labels >= 5).float()
+        num_samples = len(y)
+
+        y_mod = np.abs(y.unsqueeze(1) - np.random.binomial(1, self.p_label, (num_samples, 1)))
+        z = np.abs(y_mod - np.random.binomial(1, environment, (num_samples, 1)))
+        red = np.where(z == 1)[0]
+
+        tsh = 0.0
+        chR = cp.deepcopy(images[red, :])
+        chR[chR > tsh] = 1
+        chG = cp.deepcopy(images[red, :])
+        chG[chG > tsh] = 0
+        chB = cp.deepcopy(images[red, :])
+        chB[chB > tsh] = 0
+        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
+
+        green = np.where(z == 0)[0]
+        tsh = 0.0
+        chR1 = cp.deepcopy(images[green, :])
+        chR1[chR1 > tsh] = 0
+        chG1 = cp.deepcopy(images[green, :])
+        chG1[chG1 > tsh] = 1
+        chB1 = cp.deepcopy(images[green, :])
+        chB1[chB1 > tsh] = 0
+        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
+
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
+        dataset = torch.tensor(dataset, dtype=torch.float32)
+
+        labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long),1)
+
+        return TensorDataset(dataset,labels)
+
+    def torch_bernoulli_(self, p, size):
+        return (torch.rand(size) < p).float()
+
+    def torch_xor_(self, a, b):
+        return (a - b).abs()
+
+class CSMNIST(MultipleEnvironmentMNIST):
+    ENVIRONMENTS = ['0.2','0.1','0.9']
+
+    def __init__(self, root, test_envs, hparams):
+        super(CSMNIST, self).__init__(root, [0.9, 0.1, 0.2],
+                                         self.color_dataset, (2, 28, 28,), 2)
+
+        self.input_shape = (3, 28, 28,)
+        self.num_classes = 2
+        self.p_label = 0.25
+
+
+    def color_dataset(self, images, labels, environment):
+        # prob_label we retain from other classes for simplicity but is not relevant for this class
+        self.p_label = 0.25
+        # Convert y>5 to 1 and y<5 to 0.
+        y = (labels >= 5).float()
+
+        num_samples = len(y)
+        z_color = np.random.binomial(1, 0.5, (num_samples, 1))  # sample color for each sample
+        w_comb = 1 - np.logical_xor(y.unsqueeze(1), z_color)  # compute xor of label and color and negate it
+
+        selection_0 = np.where(w_comb == 0)[0]  # indices where -xor is zero
+        selection_1 = np.where(w_comb == 1)[0]  # indices were -xor is one
+        ns0 = np.shape(selection_0)[0]
+        ns1 = np.shape(selection_1)[0]
+        final_selection_0 = selection_0[np.where(np.random.binomial(1, environment, (ns0, 1)) == 1)[
+            0]]  # -xor =0 then select that point with probability prob_e
+        final_selection_1 = selection_1[np.where(np.random.binomial(1, 1 - environment, (ns1, 1)) == 1)[
+            0]]  # -xor =0 then select that point with probability 1-prob_e
+
+        final_selection = np.concatenate((final_selection_0, final_selection_1),
+                                         axis=0)  # indices of the final set of points selected
+        z_color_final = z_color[final_selection]  # colors of the final set of selected points
+        y = y[final_selection]  # labels of the final set of selected points
+        images = images[final_selection]  # gray scale image of the final set of selected points
+
+        ### color the points x based on z_color_final
+        red = np.where(z_color_final == 0)[0]  # select the points with z_color_final=0 to set them to red color
+        green = np.where(z_color_final == 1)[0]  # select the points with z_color_final=1 to set them to green color
+
+        num_samples_final = np.shape(y)[0]
+
+        tsh = 0.5
+        chR = cp.deepcopy(images[red, :])
+        chR[chR > tsh] = 1
+        chG = cp.deepcopy(images[red, :])
+        chG[chG > tsh] = 0
+        chB = cp.deepcopy(images[red, :])
+        chB[chB > tsh] = 0
+        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3), chB.unsqueeze(3)), axis=3)
+
+        tsh = 0.5
+        chR1 = cp.deepcopy(images[green, :])
+        chR1[chR1 > tsh] = 0
+        chG1 = cp.deepcopy(images[green, :])
+        chG1[chG1 > tsh] = 1
+        chB1 = cp.deepcopy(images[green, :])
+        chB1[chB1 > tsh] = 0
+        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3), chB1.unsqueeze(3)), axis=3)
+
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0,3,1,2))
+        dataset = torch.tensor(dataset, dtype=torch.float32)
+        labels = torch.tensor(np.concatenate((y[red], y[green]), axis=0), dtype=torch.long)
+        return TensorDataset(dataset,labels)
+
+    def torch_bernoulli_(self, p, size):
+        return (torch.rand(size) < p).float()
+
+    def torch_xor_(self, a, b):
+        return (a - b).abs()
+
+
 
 class RotatedMNIST(MultipleEnvironmentMNIST):
     ENVIRONMENTS = ['0', '15', '30', '45', '60', '75']
@@ -180,6 +369,7 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
         y = labels.view(-1)
 
         return TensorDataset(x, y)
+
 
 class Spirals(MultipleDomainDataset):
     CHECKPOINT_FREQ = 10
