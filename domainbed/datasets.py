@@ -279,10 +279,8 @@ class ACMNIST(MultipleEnvironmentMNIST):
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
         print("stuck2")
-        dataset = np.concatenate((r, g), axis=0)
-        dataset = torch.tensor(dataset,dtype=torch.float32)
-        dataset = torch.swapaxes(dataset, 2, 3)
-        dataset = torch.swapaxes(dataset, 1, 2)
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
+        dataset = torch.tensor(dataset, dtype=torch.float32)
         print(dataset.shape)
         labels = torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long)
 
