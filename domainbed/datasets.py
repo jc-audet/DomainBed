@@ -343,8 +343,6 @@ class CSMNIST(MultipleEnvironmentMNIST):
     def torch_xor_(self, a, b):
         return (a - b).abs()
 
-
-
 class RotatedMNIST(MultipleEnvironmentMNIST):
     ENVIRONMENTS = ['0', '15', '30', '45', '60', '75']
 

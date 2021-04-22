@@ -82,7 +82,7 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "ANDMask":
-        _hparam('tau', 0.9, lambda r: r.uniform(0.5, 1.))
+        _hparam('tau', 0.6, lambda r: r.uniform(0.5, 1.))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
     elif algorithm == "VARMaskv1":
@@ -103,7 +103,7 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('anneal_iter', 10000, lambda r: int(10**r.uniform(0, 4)))
 
     if algorithm in ["IGA", "SD", "VREx", "IRM"]:
-        _hparam('reset_adam', False, lambda r: False)
+        _hparam('reset_adam', True, lambda r: False)
 
 
     # Dataset-and-algorithm-specific hparam definitions. Each block of code

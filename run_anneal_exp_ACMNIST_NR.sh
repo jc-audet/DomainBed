@@ -19,7 +19,7 @@ cd $HOME/GitRepos/DomainBed/
 
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $HOME/scratch/anneal_experiment/misc/ACMNIST_results_ERM/1/\
+       --output_dir $HOME/scratch/anneal_experiment/results/ACMNIST_ERM/1/\
        --algorithm ERM \
        --dataset ACMNIST \
        --steps 2000 \
@@ -28,7 +28,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $HOME/scratch/anneal_experiment/misc/ACMNIST_results_ERM/2/\
+       --output_dir $HOME/scratch/anneal_experiment/results/ACMNIST_ERM/2/\
        --algorithm ERM \
        --dataset ACMNIST \
        --steps 2000 \
@@ -37,7 +37,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $HOME/scratch/anneal_experiment/misc/ACMNIST_results_ERM/2/\
+       --output_dir $HOME/scratch/anneal_experiment/results/ACMNIST_ERM/3/\
        --algorithm ERM \
        --dataset ACMNIST \
        --steps 2000 \
@@ -48,7 +48,7 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm SD ANDMask IRM IGA VREx\
        --dataset ACMNIST\
        --data_dir $SLURM_TMPDIR/MNIST/\
-       --output_dir $HOME/scratch/anneal_experiment/misc/ACMNIST_NR_results/\
+       --output_dir $HOME/scratch/anneal_experiment/results/ACMNIST_NR/\
        --command_launcher multi_gpu\
        --skip_confirmation\
        --steps 2000\
