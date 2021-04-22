@@ -214,13 +214,13 @@ class CFMNIST(MultipleEnvironmentMNIST):
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
 
         dataset = np.concatenate((r, g), axis=0)
-        dataset = torch.tensor(dataset)
+        dataset = torch.tensor(dataset, dtype=torch.float64)
         labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
         dataset = torch.swapaxes(dataset,2,3)
         dataset = torch.swapaxes(dataset,1,2)
         print("Is this it?",dataset.shape)
         print(labels.shape)
-        labels = torch.argmax(torch.tensor(labels), dim=1).long()
+        labels = torch.argmax(torch.tensor(labels, dtype=torch.float64), dim=1).long()
         print(labels.shape)
         return TensorDataset(dataset,labels)
 
@@ -250,7 +250,7 @@ class ACMNIST(MultipleEnvironmentMNIST):
         y_mod = np.abs(y - np.random.binomial(1, self.p_label, (num_samples, 1)))
         z = np.abs(y_mod - np.random.binomial(1, environment, (num_samples, 1)))
         print("stuck0")
-
+        print(images.shape)
         red = np.where(z == 1)[0]
         tsh = 0.0
         print("stuck0.25")
@@ -308,17 +308,20 @@ class CSMNIST(MultipleEnvironmentMNIST):
         y = (labels >= 5).float()
 
         num_samples = len(y)
-
+        print(y.shape)
         z_color = np.random.binomial(1, 0.5, (num_samples, 1))  # sample color for each sample
+        print("z_color", z_color.shape)
         w_comb = 1 - np.logical_xor(y, z_color)  # compute xor of label and color and negate it
+        print("w_comb", w_comb.shape)
         print("stuck1")
 
         selection_0 = np.where(w_comb == 0)[0]  # indices where -xor is zero
+        print("Select0", selection_0.shape)
         selection_1 = np.where(w_comb == 1)[0]  # indices were -xor is one
-
+        print("Select1", selection_1.shape)
         ns0 = np.shape(selection_0)[0]
         ns1 = np.shape(selection_1)[0]
-
+        print("Stuck1.25")
         final_selection_0 = selection_0[np.where(np.random.binomial(1, environment, (ns0, 1)) == 1)[
             0]]  # -xor =0 then select that point with probability prob_e
         final_selection_1 = selection_1[np.where(np.random.binomial(1, 1 - environment, (ns1, 1)) == 1)[
