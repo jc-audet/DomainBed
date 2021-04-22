@@ -216,7 +216,9 @@ class CFMNIST(MultipleEnvironmentMNIST):
         dataset = np.concatenate((r, g), axis=0)
         dataset = torch.tensor(dataset)
         labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-        print(dataset.shape)
+        dataset = torch.swapaxes(dataset,2,3)
+        dataset = torch.swapaxes(dataset,1,2)
+        print("Is this it?",dataset.shape)
         print(labels.shape)
         labels = torch.argmax(torch.tensor(labels), dim=1).long()
         print(labels.shape)
@@ -324,12 +326,12 @@ class CSMNIST(MultipleEnvironmentMNIST):
 
         final_selection = np.concatenate((final_selection_0, final_selection_1),
                                          axis=0)  # indices of the final set of points selected
-
+        print("stuck1.5")
         z_color_final = z_color[final_selection]  # colors of the final set of selected points
         print("stuck2")
         y = y[final_selection]  # labels of the final set of selected points
         print("stuck3")
-        images = images[final_selection]  # gray scale image of the final set of selected points
+        x = images[final_selection]  # gray scale image of the final set of selected points
         print("stuck4")
         ### color the points x based on z_color_final
 
@@ -339,20 +341,20 @@ class CSMNIST(MultipleEnvironmentMNIST):
         num_samples_final = np.shape(y)[0]
 
         tsh = 0.5
-        chR = cp.deepcopy(images[red, :])
+        chR = cp.deepcopy(x[red, :])
         chR[chR > tsh] = 1
-        chG = cp.deepcopy(images[red, :])
+        chG = cp.deepcopy(x[red, :])
         chG[chG > tsh] = 0
-        chB = cp.deepcopy(images[red, :])
+        chB = cp.deepcopy(x[red, :])
         chB[chB > tsh] = 0
         r = np.concatenate((chR, chG, chB), axis=3)
 
         tsh = 0.5
-        chR1 = cp.deepcopy(images[green, :])
+        chR1 = cp.deepcopy(x[green, :])
         chR1[chR1 > tsh] = 0
-        chG1 = cp.deepcopy(images[green, :])
+        chG1 = cp.deepcopy(x[green, :])
         chG1[chG1 > tsh] = 1
-        chB1 = cp.deepcopy(images[green, :])
+        chB1 = cp.deepcopy(x[green, :])
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1, chG1, chB1), axis=3)
 
