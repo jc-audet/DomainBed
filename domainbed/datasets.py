@@ -219,7 +219,7 @@ class CFMNIST(MultipleEnvironmentMNIST):
         dataset = torch.swapaxes(dataset,1,2)
         print("Is this it?",dataset.shape)
         print(labels.shape)
-        labels = torch.argmax(torch.tensor(labels, dtype=torch.float32), dim=1).long()
+        labels = torch.argmax(torch.tensor(labels, dtype=torch.long), dim=1).long()
         print(labels.shape)
         return TensorDataset(dataset,labels)
 
@@ -246,11 +246,16 @@ class ACMNIST(MultipleEnvironmentMNIST):
         self.p_label = 0.25
         y = (labels >= 5).float()
         num_samples = len(y)
-        y_mod = np.abs(y - np.random.binomial(1, self.p_label, (num_samples, 1)))
+        print("YSHAPED",y.shape)
+
+        y_mod = np.abs(y.unsqueeze(1) - np.random.binomial(1, self.p_label, (num_samples, 1)))
+        print("YMOD",y_mod.shape)
         z = np.abs(y_mod - np.random.binomial(1, environment, (num_samples, 1)))
+        print("ZSHAPE",z.shape)
         print("stuck0")
         print(images.shape)
         red = np.where(z == 1)[0]
+        print("RED",red.shape)
         tsh = 0.0
         print("stuck0.25")
         chR = cp.deepcopy(images[red, :])
@@ -262,7 +267,7 @@ class ACMNIST(MultipleEnvironmentMNIST):
         chB = cp.deepcopy(images[red, :])
         chB[chB > tsh] = 0
         print("stuck0.5")
-        r = np.concatenate((chR, chG), axis=3)
+        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
         print("stuck1")
         green = np.where(z == 0)[0]
         tsh = 0.0
@@ -272,13 +277,15 @@ class ACMNIST(MultipleEnvironmentMNIST):
         chG1[chG1 > tsh] = 1
         chB1 = cp.deepcopy(images[green, :])
         chB1[chB1 > tsh] = 0
-        g = np.concatenate((chR1, chG1), axis=3)
+        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
         print("stuck2")
         dataset = np.concatenate((r, g), axis=0)
-        dataset = torch.tensor(dataset)
+        dataset = torch.tensor(dataset,dtype=torch.float32)
+        dataset = torch.swapaxes(dataset, 2, 3)
+        dataset = torch.swapaxes(dataset, 1, 2)
         print(dataset.shape)
         labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-        labels = torch.argmax(torch.tensor(labels), dim=1).long()
+        labels = torch.argmax(torch.tensor(labels,torch.long), dim=1).long()
         print(labels.shape)
         return TensorDataset(dataset,labels)
 
@@ -307,9 +314,11 @@ class CSMNIST(MultipleEnvironmentMNIST):
         y = (labels >= 5).float()
 
         num_samples = len(y)
-        print(y.shape)
+        print("YSHAPE",y.shape)
         z_color = np.random.binomial(1, 0.5, (num_samples, 1))  # sample color for each sample
+        print("ZCOLOR",z_color.shape)
         w_comb = 1 - np.logical_xor(y.unsqueeze(1), z_color)  # compute xor of label and color and negate it
+        print("WCOMB", w_comb.shape)
 
         selection_0 = np.where(w_comb == 0)[0]  # indices where -xor is zero
         print("Select0", selection_0.shape)
@@ -337,20 +346,20 @@ class CSMNIST(MultipleEnvironmentMNIST):
         num_samples_final = np.shape(y)[0]
 
         tsh = 0.5
-        chR = cp.deepcopy(x[red, :])
+        chR = cp.deepcopy(images[red, :])
         chR[chR > tsh] = 1
-        chG = cp.deepcopy(x[red, :])
+        chG = cp.deepcopy(images[red, :])
         chG[chG > tsh] = 0
-        chB = cp.deepcopy(x[red, :])
+        chB = cp.deepcopy(images[red, :])
         chB[chB > tsh] = 0
         r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3), chB.unsqueeze(3)), axis=3)
 
         tsh = 0.5
-        chR1 = cp.deepcopy(x[green, :])
+        chR1 = cp.deepcopy(images[green, :])
         chR1[chR1 > tsh] = 0
-        chG1 = cp.deepcopy(x[green, :])
+        chG1 = cp.deepcopy(images[green, :])
         chG1[chG1 > tsh] = 1
-        chB1 = cp.deepcopy(x[green, :])
+        chB1 = cp.deepcopy(images[green, :])
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3), chB1.unsqueeze(3)), axis=3)
 
