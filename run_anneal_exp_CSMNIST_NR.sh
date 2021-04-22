@@ -23,7 +23,7 @@ cp -r $SCRATCH/data/MNIST $SLURM_TMPDIR
 	
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SLURM_TMPDIR/misc/CSMNIST_results_ERM/1/\
+       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/1/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -32,7 +32,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SLURM_TMPDIR/misc/CSMNIST_results_ERM/2/\
+       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/2/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -41,7 +41,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SLURM_TMPDIR/misc/CSMNIST_results_ERM/3/\
+       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/3/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -52,13 +52,10 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm SD ANDMask IRM IGA VREx\
        --dataset CSMNIST\
        --data_dir $SLURM_TMPDIR/MNIST/\
-       --output_dir $SLURM_TMPDIR/misc/CSMNIST_NR_results/\
+       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_NR_results/\
        --command_launcher multi_gpu\
        --skip_confirmation\
        --steps 2000\
        --n_trials 3\
        --n_anneal 20
-
-cp -r $SLURM_TMPDIR/misc $SCRATCH/anneal_experiment/
-
 

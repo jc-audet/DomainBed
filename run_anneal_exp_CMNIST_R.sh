@@ -48,7 +48,7 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm SD ANDMask IRM IGA VREx\
        --dataset ColoredMNIST\
        --data_dir $SLURM_TMPDIR/MNIST/\
-       --output_dir $HOME/scratch/anneal_experiment/results/ColoredMNIST_NR_results/\
+       --output_dir $HOME/scratch/anneal_experiment/results/ColoredMNIST_R_results/\
        --command_launcher multi_gpu\
        --skip_confirmation\
        --steps 2000\
