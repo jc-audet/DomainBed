@@ -185,7 +185,7 @@ class CFMNIST(MultipleEnvironmentMNIST):
         h = np.random.binomial(1, self.p_label, (num_samples, 1))
         print("h",h.shape)
         h1 = np.random.binomial(1, environment, (num_samples, 1))
-        y_mod = np.abs(y - h)
+        y_mod = np.abs(y.unsqueeze(1) - h)
         print(y_mod.shape)
         z = np.logical_xor(h1, h)
 
@@ -212,15 +212,22 @@ class CFMNIST(MultipleEnvironmentMNIST):
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
 
-        dataset = np.concatenate((r, g), axis=0)
+        # dataset = np.concatenate((r, g), axis=0)
+        # dataset = torch.tensor(dataset, dtype=torch.float32)
+        # labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
+        # dataset = torch.swapaxes(dataset,2,3)
+        # dataset = torch.swapaxes(dataset,1,2)
+        # print("Is this it?",dataset.shape)
+        # print("LABELS",labels.shape)
+        # labels = torch.argmax(torch.tensor(labels, dtype=torch.long), dim=1).long()
+        # print(labels.shape)
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
-        labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
-        dataset = torch.swapaxes(dataset,2,3)
-        dataset = torch.swapaxes(dataset,1,2)
-        print("Is this it?",dataset.shape)
-        print(labels.shape)
-        labels = torch.argmax(torch.tensor(labels, dtype=torch.long), dim=1).long()
-        print(labels.shape)
+        print(dataset.shape)
+
+        labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long), 1)
+
+        print("LABELS", labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
