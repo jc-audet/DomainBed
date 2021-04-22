@@ -64,18 +64,27 @@ Download the datasets:
 
 ```sh
 python3 -m domainbed.scripts.download \
-       --data_dir=/home/jcaudet/Downloads/\
-       --dataset=PACS
+       --data_dir=.\
+       --dataset=MNIST
 ```
 
 Train a model:
 
 ```sh
 python3 -m domainbed.scripts.train\
-       --data_dir=~/Documents/Data/MNIST\
-       --algorithm SD\
+       --data_dir=/home/jcaudet/Documents/Data/\
+       --algorithm IRM\
        --dataset ColoredMNIST\
        --test_env 0
+```
+## For Ex1 model
+```sh
+python3 -m domainbed.scripts.train\
+       --data_dir=.\
+       --algorithm Ex1\
+       --dataset ChainEquationModel\
+       --test_env 0\
+       --save_model_every_checkpoint
 ```
 
 Launch a sweep:

@@ -16,10 +16,11 @@ source $SLURM_TMPDIR/env/bin/activate
 pip3 install --no-index torch torchvision
 pip3 install --no-index tqdm
 
+cd $HOME/GitRepos/DomainBed/
+
 # Copy data to compute node
 cp -r $SCRATCH/data/MNIST $SLURM_TMPDIR
 
-cd $HOME/GitRepos/DomainBed/
 python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
        --algorithm ERM SD ANDMask IRM IGA VREx\
        --dataset ColoredMNIST\

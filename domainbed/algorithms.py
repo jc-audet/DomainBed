@@ -30,7 +30,8 @@ ALGORITHMS = [
     'ANDMask',
     'VARMaskv1',
     'VARMaskv2',
-    'IGA'
+    'IGA',
+    'Ex1'
 ]
 
 def get_algorithm_class(algorithm_name):
@@ -268,16 +269,16 @@ class IRM(ERM):
         penalty /= len(minibatches)
         loss = nll + (penalty_weight * penalty)
 
-        ## Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
-        if penalty_weight >= 1.0:
+        if not self.hparams['reset_adam'] and self.update_count >= self.hparams['anneal_iter']:
+            # Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
             loss /= penalty_weight
-        # if self.update_count == self.hparams['anneal_iter']:
-        #     # Reset Adam, because it doesn't like the sharp jump in gradient
-        #     # magnitudes that happens at this step.
-        #     self.optimizer = torch.optim.Adam(
-        #         self.network.parameters(),
-        #         lr=self.hparams["lr"],
-        #         weight_decay=self.hparams['weight_decay'])
+        elif self.hparams['reset_adam'] and self.update_count == self.hparams['anneal_iter']:
+            # Reset Adam, because it doesn't like the sharp jump in gradient
+            # magnitudes that happens at this step.
+            self.optimizer = torch.optim.Adam(
+                self.network.parameters(),
+                lr=self.hparams["lr"],
+                weight_decay=self.hparams['weight_decay'])
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -317,16 +318,16 @@ class VREx(ERM):
         penalty = ((losses - mean) ** 2).mean()
         loss = mean + penalty_weight * penalty
 
-        ## Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
-        if penalty_weight >= 1.0:
+        if not self.hparams['reset_adam'] and self.update_count >= self.hparams['anneal_iter']:
+            # Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
             loss /= penalty_weight
-        # if self.update_count == self.hparams['anneal_iter']:
-        #     # Reset Adam (like IRM), because it doesn't like the sharp jump in
-        #     # gradient magnitudes that happens at this step.
-        #     self.optimizer = torch.optim.Adam(
-        #         self.network.parameters(),
-        #         lr=self.hparams["lr"],
-        #         weight_decay=self.hparams['weight_decay'])
+        elif self.hparams['reset_adam'] and self.update_count == self.hparams['anneal_iter']:
+            # Reset Adam (like IRM), because it doesn't like the sharp jump in
+            # gradient magnitudes that happens at this step.
+            self.optimizer = torch.optim.Adam(
+                self.network.parameters(),
+                lr=self.hparams["lr"],
+                weight_decay=self.hparams['weight_decay'])
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -865,6 +866,10 @@ class SD(ERM):
 
     def update(self, minibatches, unlabeled=None):
 
+        penalty_weight = (self.sd_reg if self.update_count
+                          < self.hparams['anneal_iter'] else
+                          1.0)
+
         all_x = torch.cat([x for x,y in minibatches])
         all_y = torch.cat([y for x,y in minibatches])
         all_p = self.predict(all_x)
@@ -872,11 +877,18 @@ class SD(ERM):
         loss = F.cross_entropy(all_p, all_y)
         penalty = (all_p ** 2).mean()
 
-        objective = 0
-        if self.update_count >= self.anneal_iter:
-            objective = self.sd_reg * (loss + penalty)
-        else:
-            objective = loss + self.sd_reg * penalty
+        objective = loss + penalty_weight * penalty
+            
+        if not self.hparams['reset_adam'] and self.update_count >= self.hparams['anneal_iter']:
+            # Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
+            objective = penalty_weight * (loss + penalty)
+        elif self.hparams['reset_adam'] and self.update_count == self.hparams['anneal_iter']:
+            # Reset Adam (like IRM), because it doesn't like the sharp jump in
+            # gradient magnitudes that happens at this step.
+            self.optimizer = torch.optim.Adam(
+                self.network.parameters(),
+                lr=self.hparams["lr"],
+                weight_decay=self.hparams['weight_decay'])
 
         self.optimizer.zero_grad()
         objective.backward()
@@ -1110,9 +1122,17 @@ class IGA(ERM):
         
         loss = mean_loss + penalty_weight * penalty_value
 
-        ## Rescaling loss
-        if penalty_weight >= 1.0:
+        if not self.hparams['reset_adam'] and self.update_count >= self.hparams['anneal_iter']:
+            # Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
             loss /= penalty_weight
+        elif self.hparams['reset_adam'] and self.update_count == self.hparams['anneal_iter']:
+            # Reset Adam (like IRM), because it doesn't like the sharp jump in
+            # gradient magnitudes that happens at this step.
+            self.optimizer = torch.optim.Adam(
+                self.network.parameters(),
+                lr=self.hparams["lr"],
+                weight_decay=self.hparams['weight_decay'])
+
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -1121,3 +1141,57 @@ class IGA(ERM):
 
 
         return {'loss': mean_loss.item(), 'penalty': penalty_value.item(), 'penalty_weight': penalty_weight}
+
+
+
+class Ex1(Algorithm):
+    """
+    Pure IRM setup used for example 1 in the IRM paper
+    """
+
+    def __init__(self, input_shape, num_classes, num_domains, hparams):
+        super(Ex1, self).__init__(input_shape, num_classes, num_domains,
+                                  hparams)
+
+        if torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+        
+        dim_x = input_shape[0]
+        self.phi = torch.nn.Parameter(torch.eye(dim_x, dim_x, device=device))
+        self.w = torch.ones(dim_x, 1, device=device)
+        self.w.requires_grad = True
+
+        self.reg = hparams['reg']
+
+        self.opt = torch.optim.Adam([self.phi], lr=hparams['lr'])
+        self.loss = torch.nn.MSELoss()
+
+        self.register_buffer('update_count', torch.tensor([0]))
+        self.anneal_iter = hparams['anneal_iter']
+
+    def update(self, environments, unlabeled=None):
+
+        penalty_weight = (self.reg if self.update_count >= self.anneal_iter else 1.)
+
+        penalty = 0
+        loss = 0
+        for x_e, y_e in environments:
+            loss_e = self.loss(x_e @ self.phi @ self.w, y_e)
+            penalty += torch.autograd.grad(loss_e, self.w,
+                            create_graph=True)[0].pow(2).mean()
+            loss += loss_e
+
+        self.opt.zero_grad()
+        (penalty_weight * loss + (1 - penalty_weight) * penalty).backward()
+        self.opt.step()
+        self.update_count += 1
+
+        return {'loss': loss.item()}
+
+    def predict(self, x):
+        return x @ self.phi @ self.w
+
+    def solution(self):
+        return (self.phi @ self.w).view(-1, 1)

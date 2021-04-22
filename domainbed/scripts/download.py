@@ -290,7 +290,7 @@ def download_sviro(data_dir, download):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download datasets')
     parser.add_argument('--data_dir', type=str, required=True)
-    parser.add_argument('--dataset', type=str, choices=['MNIST', 'PACS', 'VLCS', 'TERRA'], required=True)
+    parser.add_argument('--dataset', type=str, choices=['MNIST', 'PACS', 'VLCS', 'TerraIncognita'], required=True)
     parser.add_argument('--download', action='store_true')
     args = parser.parse_args()
 
@@ -300,9 +300,8 @@ if __name__ == "__main__":
         download_pacs(args.data_dir, args.download)
     elif args.dataset == 'VLCS':
         download_vlcs(args.data_dir, args.download)
-    elif args.dataset == 'TERRA':
+    elif args.dataset == 'TerraIncognita':
         download_terra_incognita(args.data_dir, args.download)
-
 
     # download_office_home(args.data_dir)
     # download_domain_net(args.data_dir)

@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --time=3-00:00:00
+#SBATCH --time=4-00:00:00
 #SBATCH --mem=100Gb
 
 # Load Modules and environements
@@ -16,13 +16,14 @@ source $SLURM_TMPDIR/env/bin/activate
 pip3 install --no-index torch torchvision
 pip3 install --no-index tqdm
 
+cd $HOME/GitRepos/DomainBed/
+
 # Copy data to compute node
 cp $HOME/projects/rrg-bengioy-ad/jcaudet/VLCS.tar.gz $SLURM_TMPDIR
 python3 -m domainbed.scripts.download \
        --data_dir=$SLURM_TMPDIR\
        --dataset=VLCS
 
-cd $HOME/GitRepos/DomainBed/
 
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\

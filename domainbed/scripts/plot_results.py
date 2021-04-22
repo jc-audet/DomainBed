@@ -13,6 +13,7 @@ import os
 import random
 import sys
 import time
+import torch
 
 import numpy as np
 import tqdm
@@ -330,6 +331,90 @@ def plot_training_curve(records, algorithm):
                 plt.show()
 
 
+def plot_Ex1_solution(records):
+
+    def errors(w, w_hat):
+        w = w.view(-1)
+        w_hat = w_hat.view(-1)
+
+        i_causal = torch.where(w != 0)[0].view(-1)
+        i_noncausal = torch.where(w == 0)[0].view(-1)
+
+        if len(i_causal):
+            error_causal = (w[i_causal] - w_hat[i_causal]).pow(2).mean()
+            error_causal = error_causal.item()
+        else:
+            error_causal = 0
+
+        if len(i_noncausal):
+            error_noncausal = (w[i_noncausal] - w_hat[i_noncausal]).pow(2).mean()
+            error_noncausal = error_noncausal.item()
+        else:
+            error_noncausal = 0
+
+        return error_causal, error_noncausal
+
+    grouped_records = get_grouped_anneal(records)
+
+    alg_names = Q(records).select("args.algorithm").unique()
+    alg_names = ([n for n in alg_names if n==algorithms.ALGORITHMS])
+
+    # read dataset names and sort (lexicographic order)
+    dataset_names = Q(records).select("args.dataset").unique().sorted()
+    dataset_names = [d for d in datasets.DATASETS if d in dataset_names]
+
+    step = collections.defaultdict(lambda: [])
+    loss = collections.defaultdict(lambda: [])
+    loss_causal = collections.defaultdict(lambda: [])
+    loss_noncausal = collections.defaultdict(lambda: [])
+
+    for exp in grouped_records:
+
+        id = (exp['Anneal_iter'],
+            exp['algorithm'],
+            exp['dataset'])
+
+        # step[id].append([])
+        # loss[id].append([])
+        # loss_causal[id].append([])
+        # loss_noncausal[id].append([])
+        
+        for it in range(len(exp['records'])):
+
+            solution = exp['records'][it]['solution']
+            method_solution = exp['records'][it]['model_solution']
+            scramble = exp['records'][it]['scramble']
+
+            it_loss_causal, it_loss_noncausal = errors(torch.tensor(solution), torch.tensor(scramble) @ torch.tensor(method_solution))
+
+            step[id].append(exp['records'][it]['step'])
+            loss[id].append(exp['records'][it]['loss'])
+            loss_causal[id].append(it_loss_causal)
+            loss_noncausal[id].append(it_loss_noncausal)
+
+    for d in dataset_names:
+        for id, v in loss.items():
+            # Test accs
+            plt.figure()
+            plt.plot(step[id], loss_causal[id])
+            plt.title(id)
+            # plt.axvline(id[0], color='k', linestyle='--')
+            plt.ylabel('Causal loss')
+
+            # acc gap
+            plt.figure()
+            plt.plot(step[id], loss_noncausal[id])
+            plt.title(id)
+            # plt.axvline(id[0], color='k', linestyle='--')
+            plt.ylabel('nonCausal loss')
+
+            plt.figure()
+            plt.plot(step[id], loss[id])
+            plt.title(id)
+            # plt.axvline(id[0], color='k', linestyle='--')
+            plt.ylabel('Loss')
+            plt.show()
+
 
 
 if __name__ == "__main__":
@@ -346,8 +431,8 @@ if __name__ == "__main__":
     sys.stdout = misc.Tee(os.path.join(args.input_dir, results_file), "w")
 
     records = reporting.load_records(args.input_dir)
-
-    plot_anneal_experiment(records)
+    plot_Ex1_solution(records)
+    # plot_anneal_experiment(records)
     # plot_anneal_experiment_max(records)
     # plot_training_curve(records, 'ANDMask')
    

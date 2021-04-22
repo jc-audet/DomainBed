@@ -13,7 +13,7 @@ def _hparams(algorithm, dataset, random_seed):
     New algorithms / networks / etc. should add entries here.
     """
     SMALL_IMAGES = ['Debug28', 'RotatedMNIST', 'ColoredMNIST']
-    NON_IMAGES = ['Spirals']
+    NON_IMAGES = ['Spirals', 'ChainEquationModel']
 
     hparams = {}
 
@@ -98,11 +98,28 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('penalty', 1e4, lambda r: 10**r.uniform(1, 5))
         _hparam('anneal_iter', 500, lambda r: int(10**r.uniform(0, 4)))
 
+    elif algorithm == "Ex1":
+        _hparam('reg', 1e-4, lambda r: 10**r.uniform(-1, -5))
+        _hparam('anneal_iter', 10000, lambda r: int(10**r.uniform(0, 4)))
+
+
+    if algorithm in ["IGA", "SD", "VREx", "IRM"]:
+        _hparam('reset_adam', True, lambda r: False)
+
 
     # Dataset-and-algorithm-specific hparam definitions. Each block of code
     # below corresponds to exactly one hparam. Avoid nested conditionals.
 
+    if dataset == 'ChainEquationModel':
+        _hparam('dim', 10, lambda r: 10)
+        _hparam('ones', True, lambda r: True)
+        _hparam('scramble', False, lambda r: False)
+        _hparam('hetero', True, lambda r: True)
+        _hparam('hidden', False, lambda r: False)
+
     if dataset in SMALL_IMAGES:
+        _hparam('lr', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5))
+    elif dataset in ['ChainEquationModel']:
         _hparam('lr', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5))
     elif dataset in NON_IMAGES:
         _hparam('lr', 1e-2, lambda r: 10**r.uniform(-4.5, -2.5))

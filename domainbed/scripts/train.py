@@ -242,10 +242,19 @@ if __name__ == "__main__":
             misc.print_row([results[key] for key in results_keys],
                 colwidth=12)
 
-            results.update({
-                'hparams': hparams,
-                'args': vars(args)    
-            })
+            if args.algorithm == 'Ex1':
+                results.update({
+                    'hparams': hparams,
+                    'args': vars(args),
+                    'model_solution': algorithm.solution().cpu().data.numpy().tolist(),
+                    'solution': dataset.solution()[0].cpu().data.numpy().tolist(),
+                    'scramble': dataset.solution()[1].cpu().data.numpy().tolist()
+                })
+            else:
+                results.update({
+                    'hparams': hparams,
+                    'args': vars(args)    
+                })
 
             epochs_path = os.path.join(args.output_dir, 'results.jsonl')
             with open(epochs_path, 'a') as f:

@@ -9,6 +9,7 @@ import torchvision.datasets.folder
 from torch.utils.data import TensorDataset, Subset
 from torchvision.datasets import MNIST, ImageFolder
 from torchvision.transforms.functional import rotate
+import pandas as pd
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
 # from wilds.datasets.fmow_dataset import FMoWDataset
@@ -29,11 +30,13 @@ DATASETS = [
     "TerraIncognita",
     "DomainNet",
     "SVIRO",
+    # "CelebA",
     # WILDS datasets
-    "WILDSCamelyon",
-    "WILDSFMoW",
+    # "WILDSCamelyon",
+    # "WILDSFMoW",
     #Other
-    "Spirals"
+    "Spirals",
+    "ChainEquationModel"
 ]
 
 def get_dataset_class(dataset_name):
@@ -49,7 +52,7 @@ def num_environments(dataset_name):
 
 class MultipleDomainDataset:
     N_STEPS = 5001           # Default, subclasses may override
-    CHECKPOINT_FREQ = 10    # Default, subclasses may override
+    CHECKPOINT_FREQ = 10     # Default, subclasses may override
     N_WORKERS = 8            # Default, subclasses may override
     ENVIRONMENTS = None      # Subclasses should override
     INPUT_SHAPE = None       # Subclasses should override
@@ -419,6 +422,152 @@ class WILDSDataset(MultipleDomainDataset):
         metadata_index = wilds_dataset.metadata_fields.index(metadata_name)
         metadata_vals = wilds_dataset.metadata_array[:, metadata_index]
         return sorted(list(set(metadata_vals.view(-1).tolist())))
+
+class ChainEquationModel(MultipleDomainDataset):
+    """
+    Example 1 from the original IRM paper (https://arxiv.org/pdf/1907.02893.pdf)
+    Implementation taken from the paper code release (https://github.com/facebookresearch/InvariantRiskMinimization/blob/master/code/experiment_synthetic/sem.py)
+    """
+    N_STEPS = 50000
+    CHECKPOINT_FREQ = 10
+    ENVIRONMENTS = ['0.2', '2.', '5.']
+
+    def __init__(self, root, test_envs, hparams):
+        super().__init__()
+        self.hetero = hparams['hetero']
+        self.hidden = hparams['hidden']
+        self.dim = hparams['dim'] // 2
+        self.num_classes = 1
+        self.input_shape = (hparams['dim'],)
+
+        if hparams['ones']:
+            self.wxy = torch.eye(self.dim)
+            self.wyz = torch.eye(self.dim)
+        else:
+            self.wxy = torch.randn(self.dim, self.dim) / hparams['dim']
+            self.wyz = torch.randn(self.dim, self.dim) / hparams['dim']
+
+        if hparams['scramble']:
+            self.scramble, _ = torch.qr(torch.randn(hparams['dim'], hparams['dim']))
+        else:
+            self.scramble = torch.eye(hparams['dim'])
+
+        if hparams['hidden']:
+            self.whx = torch.randn(self.dim, self.dim) / hparams['dim']
+            self.why = torch.randn(self.dim, self.dim) / hparams['dim']
+            self.whz = torch.randn(self.dim, self.dim) / hparams['dim']
+        else:
+            self.whx = torch.eye(self.dim, self.dim)
+            self.why = torch.zeros(self.dim, self.dim)
+            self.whz = torch.zeros(self.dim, self.dim)
+
+        ## Create dataset
+        self.datasets = []
+
+        for e in self.ENVIRONMENTS:
+            self.datasets.append(self(float(e)))
+        
+
+    def solution(self):
+        w = torch.cat((self.wxy.sum(1), torch.zeros(self.dim))).view(-1, 1)
+        return w, self.scramble
+
+    def __call__(self, env, n = 1000):
+        h = torch.randn(n, self.dim) * env
+        x = h @ self.whx + torch.randn(n, self.dim) * env
+
+        if self.hetero:
+            y = x @ self.wxy + h @ self.why + torch.randn(n, self.dim) * env
+            z = y @ self.wyz + h @ self.whz + torch.randn(n, self.dim)
+        else:
+            y = x @ self.wxy + h @ self.why + torch.randn(n, self.dim)
+            z = y @ self.wyz + h @ self.whz + torch.randn(n, self.dim) * env
+
+        return TensorDataset(torch.cat((x, z), 1) @ self.scramble, y.sum(1, keepdim=True))
+
+    
+# class CelebA(MultipleDomainDataset):
+#     """
+#     CelebA dataset (already cropped and centered).
+#     Note: idx and filenames are off by one.
+#     Implementation taken from GroupDRO code release: https://github.com/kohpangwei/group_DRO 
+#     """
+#     CHECKPOINT_FREQ = 10
+#     ENVIRONMENTS = []
+#     def __init__(self, root, test_envs, hparams):
+#         super().__init__()
+#         self.dir = os.path.join(root, "CelebA/")
+        
+#         self.target_name = 'Blond_Hair' #TODO: make it so we can change this without hardcoding it
+#         self.confounder_names = 'Male'  #TODO: Same thing here
+
+#         print(self.dir)
+
+#         # Read in attributes
+#         self.attrs_df = pd.read_csv(os.path.join(self.dir, 'list_attr_celeba.csv'))
+
+#         # Split out filenames and attribute names
+#         self.data_dir = os.path.join(self.dir, 'data', 'img_align_celeba')
+#         self.filename_array = self.attrs_df['image_id'].values
+#         self.attrs_df = self.attrs_df.drop(labels='image_id', axis='columns')
+#         self.attr_names = self.attrs_df.columns.copy()
+
+#         # Then cast attributes to numpy array and set them to 0 and 1
+#         # (originally, they're -1 and 1)
+#         self.attrs_df = self.attrs_df.values
+#         self.attrs_df[self.attrs_df == -1] = 0
+
+#         # Get the y values
+#         target_idx = self.attr_idx(self.target_name)
+#         self.y_array = self.attrs_df[:, target_idx]
+#         self.n_classes = 2
+
+#         # Map the confounder attributes to a number 0,...,2^|confounder_idx|-1
+#         self.confounder_idx = [self.attr_idx(a) for a in self.confounder_names]
+#         self.n_confounders = len(self.confounder_idx)
+#         confounders = self.attrs_df[:, self.confounder_idx]
+#         confounder_id = confounders @ np.power(2, np.arange(len(self.confounder_idx)))
+#         self.confounder_array = confounder_id
+
+#         # Map to groups
+#         self.n_groups = self.n_classes * pow(2, len(self.confounder_idx))
+#         self.group_array = (self.y_array*(self.n_groups/2) + self.confounder_array).astype('int')
+
+#         self.train_transform = get_transform_celebA(train=True, augment_data=hparams['data_augmentation'])
+#         self.eval_transform = get_transform_celebA(train=False, augment_data=hparams['data_augmentation'])
+
+#         print("done")
+
+#     def attr_idx(self, attr_name):
+#         return self.attr_names.get_loc(attr_name)
+
+#     def get_transform_celebA(self, train, augment_data):
+#         orig_w = 178
+#         orig_h = 218
+#         orig_min_dim = min(orig_w, orig_h)
+#         target_resolution = (orig_w, orig_h)
+
+#         if (not train) or (not augment_data):
+#             transform = transforms.Compose([
+#                 transforms.CenterCrop(orig_min_dim),
+#                 transforms.Resize(target_resolution),
+#                 transforms.ToTensor(),
+#                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+#             ])
+#         else:
+#             # Orig aspect ratio is 0.81, so we don't squish it in that direction any more
+#             transform = transforms.Compose([
+#                 transforms.RandomResizedCrop(
+#                     target_resolution,
+#                     scale=(0.7, 1.0),
+#                     ratio=(1.0, 1.3333333333333333),
+#                     interpolation=2),
+#                 transforms.RandomHorizontalFlip(),
+#                 transforms.ToTensor(),
+#                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+#             ])
+#         return transform
+
 
 
 # class WILDSCamelyon(WILDSDataset):

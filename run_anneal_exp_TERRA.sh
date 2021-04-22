@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --account=rrg-bengioy-ad
-#SBATCH --job-name=Anneal_sweep_VLCS
-#SBATCH --output=Anneal_sweep_VLCS.out
-#SBATCH --error=Anneal_sweep_error_VLCS.out
+#SBATCH --job-name=Anneal_sweep_TERRA
+#SBATCH --output=Anneal_sweep_TERRA.out
+#SBATCH --error=Anneal_sweep_error_TERRA.out
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --time=3-00:00:00
+#SBATCH --time=4-00:00:00
 #SBATCH --mem=100Gb
 
 # Load Modules and environements
@@ -16,19 +16,21 @@ source $SLURM_TMPDIR/env/bin/activate
 pip3 install --no-index torch torchvision
 pip3 install --no-index tqdm
 
+cd $HOME/GitRepos/DomainBed/
+
 # Copy data to compute node
-cp $HOME/projects/rrg-bengioy-ad/jcaudet/VLCS.tar.gz $SLURM_TMPDIR
+mkdir $SLURM_TMPDIR/terra_incognita
+cp $HOME/projects/rrg-bengioy-ad/jcaudet/terra_incognita_images.tar.gz $SLURM_TMPDIR/terra_incognita
+cp $HOME/projects/rrg-bengioy-ad/jcaudet/terra_incognita_annotations.tar.gz $SLURM_TMPDIR/terra_incognita
 python3 -m domainbed.scripts.download \
        --data_dir=$SLURM_TMPDIR\
-       --dataset=VLCS
-
-cd $HOME/GitRepos/DomainBed/
+       --dataset=TerraIncognita
 
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\
        --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/1/\
        --algorithm ERM \
-       --dataset VLCS \
+       --dataset TerraIncognita \
        --steps 200 \
        --seed 1 \
        --trial_seed 1
@@ -37,7 +39,7 @@ python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\
        --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/2/\
        --algorithm ERM \
-       --dataset VLCS \
+       --dataset TerraIncognita \
        --steps 200 \
        --seed 2 \
        --trial_seed 2
@@ -46,14 +48,14 @@ python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\
        --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/3/\
        --algorithm ERM \
-       --dataset VLCS \
+       --dataset TerraIncognita \
        --steps 200 \
        --seed 3 \
        --trial_seed 3
 
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm IRM VREx \
-       --dataset VLCS \
+       --dataset TerraIncognita \
        --data_dir $SLURM_TMPDIR/ \
        --output_dir $SLURM_TMPDIR/misc/VLCS_results/ \
        --command_launcher multi_gpu \
