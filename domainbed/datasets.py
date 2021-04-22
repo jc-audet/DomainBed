@@ -256,19 +256,17 @@ class ACMNIST(MultipleEnvironmentMNIST):
         print(images.shape)
         red = np.where(z == 1)[0]
         print("RED",red.shape)
+
         tsh = 0.0
-        print("stuck0.25")
         chR = cp.deepcopy(images[red, :])
         #        chR = cp.deepcopy(images[red, :])
-        print("stuck0.4")
         chR[chR > tsh] = 1
         chG = cp.deepcopy(images[red, :])
         chG[chG > tsh] = 0
         chB = cp.deepcopy(images[red, :])
         chB[chB > tsh] = 0
-        print("stuck0.5")
         r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
-        print("stuck1")
+
         green = np.where(z == 0)[0]
         tsh = 0.0
         chR1 = cp.deepcopy(images[green, :])
@@ -278,13 +276,14 @@ class ACMNIST(MultipleEnvironmentMNIST):
         chB1 = cp.deepcopy(images[green, :])
         chB1[chB1 > tsh] = 0
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
-        print("stuck2")
+
         dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
         print(dataset.shape)
-        labels = torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long)
 
-        print(labels.shape)
+        labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long),1)
+
+        print("LABELS",labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
@@ -364,7 +363,7 @@ class CSMNIST(MultipleEnvironmentMNIST):
         dataset = np.transpose(np.concatenate((r, g), axis=0), (0,3,1,2))
         dataset = torch.tensor(dataset, dtype=torch.float32)
         labels = torch.tensor(np.concatenate((y[red], y[green]), axis=0), dtype=torch.long)
-
+        print("LABELS",labels.shape)
         return TensorDataset(dataset,labels)
 
     def torch_bernoulli_(self, p, size):
