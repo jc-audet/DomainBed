@@ -9,10 +9,7 @@ import torchvision.datasets.folder
 from torch.utils.data import TensorDataset, Subset
 from torchvision.datasets import MNIST, ImageFolder
 from torchvision.transforms.functional import rotate
-import pandas as pd
 import copy as cp
-from sklearn.model_selection import KFold
-import tensorflow as tf
 
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
