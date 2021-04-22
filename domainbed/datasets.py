@@ -214,13 +214,13 @@ class CFMNIST(MultipleEnvironmentMNIST):
         g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
 
         dataset = np.concatenate((r, g), axis=0)
-        dataset = torch.tensor(dataset, dtype=torch.float64)
+        dataset = torch.tensor(dataset, dtype=torch.float32)
         labels = np.concatenate((y_mod[red, :], y_mod[green, :]), axis=0)
         dataset = torch.swapaxes(dataset,2,3)
         dataset = torch.swapaxes(dataset,1,2)
         print("Is this it?",dataset.shape)
         print(labels.shape)
-        labels = torch.argmax(torch.tensor(labels, dtype=torch.float64), dim=1).long()
+        labels = torch.argmax(torch.tensor(labels, dtype=torch.float32), dim=1).long()
         print(labels.shape)
         return TensorDataset(dataset,labels)
 
