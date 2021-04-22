@@ -176,7 +176,6 @@ class CFMNIST(MultipleEnvironmentMNIST):
         self.num_classes = 2
         self.p_label = 0.25
 
-
     def color_dataset(self, images, labels, environment):
         # Convert y>5 to 1 and y<5 to 0.
         self.p_label = 0.25
@@ -294,7 +293,7 @@ class CSMNIST(MultipleEnvironmentMNIST):
         super(CSMNIST, self).__init__(root, [0.9, 0.1, 0.2],
                                          self.color_dataset, (2, 28, 28,), 2)
 
-        self.input_shape = (2, 28, 28,)
+        self.input_shape = (3, 28, 28,)
         self.num_classes = 2
         self.p_label = 0.25
 
@@ -308,8 +307,7 @@ class CSMNIST(MultipleEnvironmentMNIST):
         num_samples = len(y)
 
         z_color = np.random.binomial(1, 0.5, (num_samples, 1))  # sample color for each sample
-        w_comb = 1 - np.logical_xor(y, z_color)  # compute xor of label and color and negate it
-        print("stuck1")
+        w_comb = 1 - np.logical_xor(y.unsqueeze(1), z_color)  # compute xor of label and color and negate it
 
         selection_0 = np.where(w_comb == 0)[0]  # indices where -xor is zero
         selection_1 = np.where(w_comb == 1)[0]  # indices were -xor is one
@@ -326,13 +324,10 @@ class CSMNIST(MultipleEnvironmentMNIST):
                                          axis=0)  # indices of the final set of points selected
 
         z_color_final = z_color[final_selection]  # colors of the final set of selected points
-        print("stuck2")
         y = y[final_selection]  # labels of the final set of selected points
-        print("stuck3")
         images = images[final_selection]  # gray scale image of the final set of selected points
-        print("stuck4")
-        ### color the points x based on z_color_final
 
+        ### color the points x based on z_color_final
         red = np.where(z_color_final == 0)[0]  # select the points with z_color_final=0 to set them to red color
         green = np.where(z_color_final == 1)[0]  # select the points with z_color_final=1 to set them to green color
 
@@ -345,7 +340,7 @@ class CSMNIST(MultipleEnvironmentMNIST):
         chG[chG > tsh] = 0
         chB = cp.deepcopy(images[red, :])
         chB[chB > tsh] = 0
-        r = np.concatenate((chR, chG, chB), axis=3)
+        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3), chB.unsqueeze(3)), axis=3)
 
         tsh = 0.5
         chR1 = cp.deepcopy(images[green, :])
@@ -354,14 +349,11 @@ class CSMNIST(MultipleEnvironmentMNIST):
         chG1[chG1 > tsh] = 1
         chB1 = cp.deepcopy(images[green, :])
         chB1[chB1 > tsh] = 0
-        g = np.concatenate((chR1, chG1, chB1), axis=3)
+        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3), chB1.unsqueeze(3)), axis=3)
 
-        dataset = np.concatenate((r, g), axis=0)
-        dataset = torch.tensor(dataset)
-        print(dataset.shape)
-        labels = np.concatenate((y[red, :], y[green, :]), axis=0)
-        labels = torch.argmax(torch.tensor(labels), dim=1).long()
-        print(labels.shape)
+        dataset = np.transpose(np.concatenate((r, g), axis=0), (0,3,1,2))
+        dataset = torch.tensor(dataset, dtype=torch.float32)
+        labels = torch.tensor(np.concatenate((y[red], y[green]), axis=0), dtype=torch.long)
 
         return TensorDataset(dataset,labels)
 

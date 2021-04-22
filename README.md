@@ -73,8 +73,8 @@ Train a model:
 ```sh
 python3 -m domainbed.scripts.train\
        --data_dir=~/Documents/Data/MNIST\
-       --algorithm SD\
-       --dataset ColoredMNIST\
+       --algorithm IRM\
+       --dataset CSMNIST\
        --test_env 0
 ```
 
