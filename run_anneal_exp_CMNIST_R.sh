@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --account=rrg-bengioy-ad
 #SBATCH --job-name=Anneal_sweep_CMNIST_with_reset
 #SBATCH --output=Anneal_sweep_CMNIST_with_reset.out
 #SBATCH --error=Anneal_sweep_error_CMNIST_with_reset.out
@@ -16,10 +15,10 @@ source $SLURM_TMPDIR/env/bin/activate
 pip3 install --no-index torch torchvision
 pip3 install --no-index tqdm
 
-cd $HOME/GitRepos/DomainBed/
+cd $HOME/DomainBed/
 
 # Copy data to compute node
-cp -r $SCRATCH/data/MNIST $SLURM_TMPDIR
+cp -r $HOME/testResults/MNIST $SLURM_TMPDIR
 	
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/MNIST\
@@ -59,6 +58,6 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --n_trials 3\
        --n_anneal 20
 
-cp -r $SLURM_TMPDIR/misc $SCRATCH/anneal_experiment/
+cp -r $SLURM_TMPDIR/misc $HOME/anneal_experiment/
 
 
