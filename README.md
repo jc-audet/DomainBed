@@ -64,8 +64,8 @@ Download the datasets:
 
 ```sh
 python3 -m domainbed.scripts.download \
-       --data_dir=.\
-       --dataset=MNIST
+       --dataset=WILDSCelebA\
+       --data_dir=.
 ```
 
 Train a model:

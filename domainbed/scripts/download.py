@@ -13,7 +13,8 @@ import os
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
 # from wilds.datasets.fmow_dataset import FMoWDataset 
-# from wilds.datasets.iwildcam_dataset import  IWildCamDataset
+from wilds.datasets.iwildcam_dataset import IWildCamDataset
+from wilds.datasets.celebA_dataset import CelebADataset
 
 
 # utils #######################################################################
@@ -290,7 +291,7 @@ def download_sviro(data_dir, download):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download datasets')
     parser.add_argument('--data_dir', type=str, required=True)
-    parser.add_argument('--dataset', type=str, choices=['MNIST', 'PACS', 'VLCS', 'TerraIncognita'], required=True)
+    parser.add_argument('--dataset', type=str, required=True)
     parser.add_argument('--download', action='store_true')
     args = parser.parse_args()
 
@@ -302,6 +303,11 @@ if __name__ == "__main__":
         download_vlcs(args.data_dir, args.download)
     elif args.dataset == 'TerraIncognita':
         download_terra_incognita(args.data_dir, args.download)
+    elif args.dataset == 'WILDSIWildCams':
+        IWildCamDataset(root_dir=args.data_dir, download=True)
+    elif args.dataset == "WILDSCelebA":
+        CelebADataset(root_dir=args.data_dir, download=True)
+        
 
     # download_office_home(args.data_dir)
     # download_domain_net(args.data_dir)

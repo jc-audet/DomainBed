@@ -12,8 +12,9 @@ from torchvision.transforms.functional import rotate
 import copy as cp
 
 
-# from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
-# from wilds.datasets.fmow_dataset import FMoWDataset
+from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
+from wilds.datasets.fmow_dataset import FMoWDataset
+from wilds.datasets.iwildcam_dataset import IWildCamDataset
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -36,8 +37,10 @@ DATASETS = [
     "SVIRO",
     # "CelebA",
     # WILDS datasets
-    # "WILDSCamelyon",
-    # "WILDSFMoW",
+    "WILDSCamelyon",
+    "WILDSFMoW",
+    "WILDSIWildCams",
+    "WILDSCelebA",
     #Other
     "Spirals",
     "ChainEquationModel"
@@ -608,6 +611,42 @@ class WILDSDataset(MultipleDomainDataset):
         metadata_vals = wilds_dataset.metadata_array[:, metadata_index]
         return sorted(list(set(metadata_vals.view(-1).tolist())))
 
+
+class WILDSCamelyon(WILDSDataset):
+    ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
+            "hospital_4"]
+    def __init__(self, root, test_envs, hparams):
+        dataset = Camelyon17Dataset(root_dir=root)
+        super().__init__(
+            dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
+
+
+class WILDSFMoW(WILDSDataset):
+    ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
+            "region_4", "region_5"]
+    def __init__(self, root, test_envs, hparams):
+        dataset = FMoWDataset(root_dir=root)
+        super().__init__(
+            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+
+
+class WILDSIWildCam(WILDSDataset):
+    ENVIRONMENTS = [ str(i) for i in range(323)]
+    def __init__(self, root, test_envs, hparams):
+        dataset = IWildCamDataset(root_dir=root)
+        super().__init__(
+            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+
+
+class WILDSCelebA(WILDSDataset):
+    ENVIRONMENTS = [ 'blond', 'not blond']
+    def __init__(self, root, test_envs, hparams):
+        dataset = IWildCamDataset(root_dir=root)
+        super().__init__(
+            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+
+            
+
 class ChainEquationModel(MultipleDomainDataset):
     """
     Example 1 from the original IRM paper (https://arxiv.org/pdf/1907.02893.pdf)
@@ -671,103 +710,3 @@ class ChainEquationModel(MultipleDomainDataset):
         return TensorDataset(torch.cat((x, z), 1) @ self.scramble, y.sum(1, keepdim=True))
 
     
-# class CelebA(MultipleDomainDataset):
-#     """
-#     CelebA dataset (already cropped and centered).
-#     Note: idx and filenames are off by one.
-#     Implementation taken from GroupDRO code release: https://github.com/kohpangwei/group_DRO 
-#     """
-#     CHECKPOINT_FREQ = 10
-#     ENVIRONMENTS = []
-#     def __init__(self, root, test_envs, hparams):
-#         super().__init__()
-#         self.dir = os.path.join(root, "CelebA/")
-        
-#         self.target_name = 'Blond_Hair' #TODO: make it so we can change this without hardcoding it
-#         self.confounder_names = 'Male'  #TODO: Same thing here
-
-#         print(self.dir)
-
-#         # Read in attributes
-#         self.attrs_df = pd.read_csv(os.path.join(self.dir, 'list_attr_celeba.csv'))
-
-#         # Split out filenames and attribute names
-#         self.data_dir = os.path.join(self.dir, 'data', 'img_align_celeba')
-#         self.filename_array = self.attrs_df['image_id'].values
-#         self.attrs_df = self.attrs_df.drop(labels='image_id', axis='columns')
-#         self.attr_names = self.attrs_df.columns.copy()
-
-#         # Then cast attributes to numpy array and set them to 0 and 1
-#         # (originally, they're -1 and 1)
-#         self.attrs_df = self.attrs_df.values
-#         self.attrs_df[self.attrs_df == -1] = 0
-
-#         # Get the y values
-#         target_idx = self.attr_idx(self.target_name)
-#         self.y_array = self.attrs_df[:, target_idx]
-#         self.n_classes = 2
-
-#         # Map the confounder attributes to a number 0,...,2^|confounder_idx|-1
-#         self.confounder_idx = [self.attr_idx(a) for a in self.confounder_names]
-#         self.n_confounders = len(self.confounder_idx)
-#         confounders = self.attrs_df[:, self.confounder_idx]
-#         confounder_id = confounders @ np.power(2, np.arange(len(self.confounder_idx)))
-#         self.confounder_array = confounder_id
-
-#         # Map to groups
-#         self.n_groups = self.n_classes * pow(2, len(self.confounder_idx))
-#         self.group_array = (self.y_array*(self.n_groups/2) + self.confounder_array).astype('int')
-
-#         self.train_transform = get_transform_celebA(train=True, augment_data=hparams['data_augmentation'])
-#         self.eval_transform = get_transform_celebA(train=False, augment_data=hparams['data_augmentation'])
-
-#         print("done")
-
-#     def attr_idx(self, attr_name):
-#         return self.attr_names.get_loc(attr_name)
-
-#     def get_transform_celebA(self, train, augment_data):
-#         orig_w = 178
-#         orig_h = 218
-#         orig_min_dim = min(orig_w, orig_h)
-#         target_resolution = (orig_w, orig_h)
-
-#         if (not train) or (not augment_data):
-#             transform = transforms.Compose([
-#                 transforms.CenterCrop(orig_min_dim),
-#                 transforms.Resize(target_resolution),
-#                 transforms.ToTensor(),
-#                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-#             ])
-#         else:
-#             # Orig aspect ratio is 0.81, so we don't squish it in that direction any more
-#             transform = transforms.Compose([
-#                 transforms.RandomResizedCrop(
-#                     target_resolution,
-#                     scale=(0.7, 1.0),
-#                     ratio=(1.0, 1.3333333333333333),
-#                     interpolation=2),
-#                 transforms.RandomHorizontalFlip(),
-#                 transforms.ToTensor(),
-#                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-#             ])
-#         return transform
-
-
-
-# class WILDSCamelyon(WILDSDataset):
-#     ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
-#             "hospital_4"]
-#     def __init__(self, root, test_envs, hparams):
-#         dataset = Camelyon17Dataset(root_dir=root)
-#         super().__init__(
-#             dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
-
-
-# class WILDSFMoW(WILDSDataset):
-#     ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
-#             "region_4", "region_5"]
-#     def __init__(self, root, test_envs, hparams):
-#         dataset = FMoWDataset(root_dir=root)
-#         super().__init__(
-#             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
