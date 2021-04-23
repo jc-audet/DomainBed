@@ -612,38 +612,38 @@ class WILDSDataset(MultipleDomainDataset):
         return sorted(list(set(metadata_vals.view(-1).tolist())))
 
 
-class WILDSCamelyon(WILDSDataset):
-    ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
-            "hospital_4"]
-    def __init__(self, root, test_envs, hparams):
-        dataset = Camelyon17Dataset(root_dir=root)
-        super().__init__(
-            dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
-
-
-class WILDSFMoW(WILDSDataset):
-    ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
-            "region_4", "region_5"]
-    def __init__(self, root, test_envs, hparams):
-        dataset = FMoWDataset(root_dir=root)
-        super().__init__(
-            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
-
-
-class WILDSIWildCam(WILDSDataset):
-    ENVIRONMENTS = [ str(i) for i in range(323)]
-    def __init__(self, root, test_envs, hparams):
-        dataset = IWildCamDataset(root_dir=root)
-        super().__init__(
-            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
-
-
-class WILDSCelebA(WILDSDataset):
-    ENVIRONMENTS = [ 'blond', 'not blond']
-    def __init__(self, root, test_envs, hparams):
-        dataset = IWildCamDataset(root_dir=root)
-        super().__init__(
-            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+# class WILDSCamelyon(WILDSDataset):
+#     ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
+#             "hospital_4"]
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = Camelyon17Dataset(root_dir=root)
+#         super().__init__(
+#             dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
+#
+#
+# class WILDSFMoW(WILDSDataset):
+#     ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
+#             "region_4", "region_5"]
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = FMoWDataset(root_dir=root)
+#         super().__init__(
+#             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+#
+#
+# class WILDSIWildCam(WILDSDataset):
+#     ENVIRONMENTS = [ str(i) for i in range(323)]
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = IWildCamDataset(root_dir=root)
+#         super().__init__(
+#             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+#
+#
+# class WILDSCelebA(WILDSDataset):
+#     ENVIRONMENTS = [ 'blond', 'not blond']
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = IWildCamDataset(root_dir=root)
+#         super().__init__(
+#             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
 
             
 
