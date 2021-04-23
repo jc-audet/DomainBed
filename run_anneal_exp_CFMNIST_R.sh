@@ -2,11 +2,10 @@
 #SBATCH --job-name=Anneal_sweep_CFMNIST_with_reset
 #SBATCH --output=Anneal_sweep_CFMNIST_with_reset.out
 #SBATCH --error=Anneal_sweep_error_CFMNIST_with_reset.out
-#SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --time=3:00:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --mem=100Gb
 
 # Load Modules and environements
@@ -18,9 +17,8 @@ pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
 
-
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
+       --data_dir $HOME/scratch/data/MNIST\
        --output_dir $HOME/scratch/anneal_experiment/results/CFMNIST_ERM/1/\
        --algorithm ERM \
        --dataset CFMNIST \
@@ -29,7 +27,7 @@ python3 -m domainbed.scripts.train\
        --trial_seed 1
        
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
+       --data_dir $HOME/scratch/data/MNIST\
        --output_dir $HOME/scratch/anneal_experiment/results/CFMNIST_ERM/2/\
        --algorithm ERM \
        --dataset CFMNIST \
@@ -38,7 +36,7 @@ python3 -m domainbed.scripts.train\
        --trial_seed 2
        
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
+       --data_dir $HOME/scratch/data/MNIST\
        --output_dir $HOME/scratch/anneal_experiment/results/CFMNIST_ERM/3/\
        --algorithm ERM \
        --dataset CFMNIST \
@@ -49,7 +47,7 @@ python3 -m domainbed.scripts.train\
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm SD ANDMask IRM IGA VREx\
        --dataset CFMNIST\
-       --data_dir $SLURM_TMPDIR/MNIST/\
+       --data_dir $HOME/scratch/data/MNIST/\
        --output_dir $HOME/scratch/anneal_experiment/results/CFMNIST_R/\
        --command_launcher multi_gpu\
        --skip_confirmation\
