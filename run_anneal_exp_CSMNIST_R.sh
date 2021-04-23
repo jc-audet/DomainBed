@@ -2,6 +2,7 @@
 #SBATCH --job-name=Anneal_sweep_CSMNIST_with_reset
 #SBATCH --output=Anneal_sweep_CSMNIST_with_reset.out
 #SBATCH --error=Anneal_sweep_error_CSMNIST_with_reset.out
+#SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
