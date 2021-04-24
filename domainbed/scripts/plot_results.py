@@ -431,10 +431,10 @@ if __name__ == "__main__":
     sys.stdout = misc.Tee(os.path.join(args.input_dir, results_file), "w")
 
     records = reporting.load_records(args.input_dir)
-    plot_Ex1_solution(records)
-    # plot_anneal_experiment(records)
+    # plot_Ex1_solution(records)
+    plot_anneal_experiment(records)
     # plot_anneal_experiment_max(records)
-    # plot_training_curve(records, 'ANDMask')
+    plot_training_curve(records, 'ERM')
    
     # if args.latex:
     #     print("\\documentclass{article}")

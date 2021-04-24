@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --account=rrg-bengioy-ad
 #SBATCH --job-name=Anneal_sweep_CSMNIST_no_reset
 #SBATCH --output=Anneal_sweep_CSMNIST_no_reset.out
 #SBATCH --error=Anneal_sweep_error_CSMNIST_no_reset.out
@@ -13,17 +12,14 @@
 module load python/3.6
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
-pip3 install --no-index torch torchvision
-pip3 install --no-index tqdm
+pip3 install torch torchvision
+pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
 
-# Copy data to compute node
-cp -r $SCRATCH/data/MNIST $SLURM_TMPDIR
-	
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/1/\
+       --data_dir $HOME/scratch/data/MNIST\
+       --output_dir $HOME/scratch/anneal_experiment/results/CSMNIST_ERM/1/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -31,8 +27,8 @@ python3 -m domainbed.scripts.train\
        --trial_seed 1
        
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/2/\
+       --data_dir $HOME/scratch/data/MNIST\
+       --output_dir $HOME/scratch/anneal_experiment/results/CSMNIST_ERM/2/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -40,8 +36,8 @@ python3 -m domainbed.scripts.train\
        --trial_seed 2
        
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/MNIST\
-       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_results_ERM/3/\
+       --data_dir $HOME/scratch/data/MNIST\
+       --output_dir $HOME/scratch/anneal_experiment/results/CSMNIST_ERM/3/\
        --algorithm ERM \
        --dataset CSMNIST \
        --steps 2000 \
@@ -51,8 +47,8 @@ python3 -m domainbed.scripts.train\
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm SD ANDMask IRM IGA VREx\
        --dataset CSMNIST\
-       --data_dir $SLURM_TMPDIR/MNIST/\
-       --output_dir $SCRATCH/anneal_experiment/results/CSMNIST_NR_results/\
+       --data_dir $HOME/scratch/data/MNIST/\
+       --output_dir $HOME/scratch/anneal_experiment/results/CSMNIST_NR/\
        --command_launcher multi_gpu\
        --skip_confirmation\
        --steps 2000\

@@ -65,7 +65,7 @@ Download the datasets:
 ```sh
 python3 -m domainbed.scripts.download \
        --dataset=WILDSCelebA\
-       --data_dir=.
+       --data_dir=$HOME/scratch/data/
 ```
 
 Train a model:
@@ -137,7 +137,8 @@ python3 -m domainbed.scripts.collect_results\
 ````
 ````sh
 python3 -m domainbed.scripts.plot_results\
-       --input_dir=/home/jcaudet/Documents/Results/OOD_scheduling
+       --input_dir=/hdd/Results/OOD_scheduling/ColoredMNIST_R_results/
+
 ````
 ````sh
 python3 -m domainbed.scripts.list_top_hparams\

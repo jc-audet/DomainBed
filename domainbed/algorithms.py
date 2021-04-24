@@ -866,10 +866,6 @@ class SD(ERM):
 
     def update(self, minibatches, unlabeled=None):
 
-        penalty_weight = (self.sd_reg if self.update_count
-                          < self.hparams['anneal_iter'] else
-                          1.0)
-
         all_x = torch.cat([x for x,y in minibatches])
         all_y = torch.cat([y for x,y in minibatches])
         all_p = self.predict(all_x)
@@ -877,18 +873,10 @@ class SD(ERM):
         loss = F.cross_entropy(all_p, all_y)
         penalty = (all_p ** 2).mean()
 
-        objective = loss + penalty_weight * penalty
-            
-        if not self.hparams['reset_adam'] and self.update_count >= self.hparams['anneal_iter']:
-            # Instead of reseting ADAM, we scale the loss to keep the gradients in a reasonable regime
-            objective = penalty_weight * (loss + penalty)
-        elif self.hparams['reset_adam'] and self.update_count == self.hparams['anneal_iter']:
-            # Reset Adam (like IRM), because it doesn't like the sharp jump in
-            # gradient magnitudes that happens at this step.
-            self.optimizer = torch.optim.Adam(
-                self.network.parameters(),
-                lr=self.hparams["lr"],
-                weight_decay=self.hparams['weight_decay'])
+        if self.update_count < self.hparams['anneal_iter']:
+            objective = loss + self.sd_reg * penalty  
+        elif self.update_count >= self.hparams['anneal_iter']:
+            objective = self.sd_reg * (loss + penalty)
 
         self.optimizer.zero_grad()
         objective.backward()

@@ -102,7 +102,7 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('reg', 1e-4, lambda r: 10**r.uniform(-1, -5))
         _hparam('anneal_iter', 10000, lambda r: int(10**r.uniform(0, 4)))
 
-    if algorithm in ["IGA", "SD", "VREx", "IRM"]:
+    if algorithm in ["IGA", "VREx", "IRM"]:
         _hparam('reset_adam', True, lambda r: False)
 
 

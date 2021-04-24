@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --account=rrg-bengioy-ad
 #SBATCH --job-name=Anneal_sweep_TERRA
 #SBATCH --output=Anneal_sweep_TERRA.out
 #SBATCH --error=Anneal_sweep_error_TERRA.out
@@ -13,22 +12,20 @@
 module load python/3.6
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
-pip3 install --no-index torch torchvision
-pip3 install --no-index tqdm
+pip3 install torch torchvision
+pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
 
 # Copy data to compute node
-mkdir $SLURM_TMPDIR/terra_incognita
-cp $HOME/projects/rrg-bengioy-ad/jcaudet/terra_incognita_images.tar.gz $SLURM_TMPDIR/terra_incognita
-cp $HOME/projects/rrg-bengioy-ad/jcaudet/terra_incognita_annotations.tar.gz $SLURM_TMPDIR/terra_incognita
 python3 -m domainbed.scripts.download \
-       --data_dir=$SLURM_TMPDIR\
-       --dataset=TerraIncognita
+       --data_dir=/hdd/data/\
+       --dataset=VLCS\
+       --download
 
 python3 -m domainbed.scripts.train\
-       --data_dir $SLURM_TMPDIR/\
-       --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/1/\
+       --data_dir $HOME/scratch/data/\
+       --output_dir $HOME/scratch/anneal_experiment/misc/TERRA_results_ERM/1/\
        --algorithm ERM \
        --dataset TerraIncognita \
        --steps 200 \
@@ -37,7 +34,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\
-       --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/2/\
+       --output_dir $SCRATCH/anneal_experiment/misc/TERRA_results_ERM/2/\
        --algorithm ERM \
        --dataset TerraIncognita \
        --steps 200 \
@@ -46,7 +43,7 @@ python3 -m domainbed.scripts.train\
        
 python3 -m domainbed.scripts.train\
        --data_dir $SLURM_TMPDIR/\
-       --output_dir $SLURM_TMPDIR/misc/VLCS_results_ERM/3/\
+       --output_dir $SCRATCH/anneal_experiment/misc/TERRA_results_ERM/3/\
        --algorithm ERM \
        --dataset TerraIncognita \
        --steps 200 \
@@ -57,7 +54,7 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm IRM VREx \
        --dataset TerraIncognita \
        --data_dir $SLURM_TMPDIR/ \
-       --output_dir $SLURM_TMPDIR/misc/VLCS_results/ \
+       --output_dir $HOME/scratch/anneal_experiment/misc/TERRA_NR_results/ \
        --command_launcher multi_gpu \
        --skip_confirmation \
        --steps 200 \
