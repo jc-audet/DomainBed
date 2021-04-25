@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --exclude=cn-b004,cn-c037,cn-b001,cn-a009,cn-c011
 #SBATCH --job-name=Anneal_sweep_VLCS_R
 #SBATCH --output=Anneal_sweep_VLCS_R.out
 #SBATCH --error=Anneal_sweep_error_VLCS_R.out
