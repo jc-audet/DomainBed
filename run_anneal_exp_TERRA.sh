@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=Anneal_sweep_TERRA
-#SBATCH --output=Anneal_sweep_TERRA.out
-#SBATCH --error=Anneal_sweep_error_TERRA.out
+#SBATCH --job-name=Anneal_sweep_TERRA_NR
+#SBATCH --output=Anneal_sweep_TERRA_NR.out
+#SBATCH --error=Anneal_sweep_error_TERRA_NR.out
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
@@ -17,18 +17,12 @@ pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
 
-# Copy data to compute node
-python3 -m domainbed.scripts.download \
-       --data_dir=/hdd/data/\
-       --dataset=VLCS\
-       --download
-
 python3 -m domainbed.scripts.train\
        --data_dir $HOME/scratch/data/\
        --output_dir $HOME/scratch/anneal_experiment/misc/TERRA_results_ERM/1/\
        --algorithm ERM \
        --dataset TerraIncognita \
-       --steps 200 \
+       --steps 400 \
        --seed 1 \
        --trial_seed 1
        
