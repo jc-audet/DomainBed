@@ -13,8 +13,8 @@ import os
 
 # from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
 # from wilds.datasets.fmow_dataset import FMoWDataset 
-from wilds.datasets.iwildcam_dataset import IWildCamDataset
-from wilds.datasets.celebA_dataset import CelebADataset
+# from wilds.datasets.iwildcam_dataset import IWildCamDataset
+# from wilds.datasets.celebA_dataset import CelebADataset
 
 
 # utils #######################################################################
