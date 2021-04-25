@@ -45,7 +45,7 @@ python3 -m domainbed.scripts.train\
        --trial_seed 3
 
 python3 -m domainbed.scripts.anneal_sweep launch\
-       --algorithm IRM VREx\
+       --algorithm IGA IRM VREx\
        --dataset PACS\
        --data_dir $HOME/scratch/data/\
        --output_dir $HOME/scratch/anneal_experiment/results/PACS_results_R/\
@@ -54,8 +54,4 @@ python3 -m domainbed.scripts.anneal_sweep launch\
        --steps 400 \
        --n_trials 3 \
        --n_anneal 20
-
-
-cp -r $SLURM_TMPDIR/misc $SCRATCH/anneal_experiment/
-
 
