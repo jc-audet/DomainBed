@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:4
 #SBATCH --time=4-00:00:00
 #SBATCH --mem=100Gb
-#SBATCH --exlude=cn-b004,cn-c037,cn-b001,cn-a009,cn-c011
+#SBATCH --exclude=cn-b004,cn-c037,cn-b001,cn-a009,cn-c011
 
 # Load Modules and environements
 module load python/3.6
