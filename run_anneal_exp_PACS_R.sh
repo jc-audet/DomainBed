@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6
 #SBATCH --gres=gpu:1
-#SBATCH --time=2-00:00:00
+#SBATCH --time=1-00:00:00
 #SBATCH --mem=32Gb
 #SBATCH --partition=unkillable
 
@@ -19,7 +19,7 @@ pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
 
-python3 -m domainbed.scripts.anneal_sweep launch\
+python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
        --algorithm IRM VREx\
        --dataset PACS\
        --data_dir $HOME/scratch/data/\
