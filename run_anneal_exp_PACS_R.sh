@@ -5,7 +5,7 @@
 #SBATCH --error=Anneal_sweep_error_PACS_R.out
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:2
 #SBATCH --time=1-00:00:00
 #SBATCH --mem=100Gb
 
@@ -19,6 +19,17 @@ pip3 install tqdm
 cd $HOME/GitRepos/DomainBed/
 
 python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
+       --algorithm IRM VREx\
+       --dataset PACS\
+       --data_dir $HOME/scratch/data/\
+       --output_dir $HOME/scratch/anneal_experiment/results/PACS_results_R/\
+       --command_launcher multi_gpu\
+       --skip_confirmation\
+       --steps 300 \
+       --n_trials 2 \
+       --n_anneal 20
+
+python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm IRM VREx\
        --dataset PACS\
        --data_dir $HOME/scratch/data/\
