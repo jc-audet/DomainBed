@@ -3,8 +3,8 @@
 #SBATCH --output=Anneal_sweep_VLCS_R.out
 #SBATCH --error=Anneal_sweep_error_VLCS_R.out
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=6
-#SBATCH --gres=gpu:8
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:4
 #SBATCH --time=3-00:00:00
 #SBATCH --mem=100Gb
 
@@ -16,6 +16,17 @@ pip3 install torch torchvision
 pip3 install tqdm
 
 cd $HOME/GitRepos/DomainBed/
+
+python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
+       --algorithm IRM VREx \
+       --dataset VLCS \
+       --data_dir $HOME/scratch/data/ \
+       --output_dir $HOME/scratch/anneal_experiment/results/VLCS_results_R/ \
+       --command_launcher multi_gpu \
+       --skip_confirmation \
+       --steps 300 \
+       --n_trials 2 \
+       --n_anneal 20
 
 python3 -m domainbed.scripts.anneal_sweep launch\
        --algorithm IRM VREx \
