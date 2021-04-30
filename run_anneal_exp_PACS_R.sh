@@ -5,9 +5,11 @@
 #SBATCH --error=Anneal_sweep_error_PACS_R.out
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
-#SBATCH --time=1-00:00:00
-#SBATCH --mem=100Gb
+#SBATCH --gres=gpu:2
+#SBATCH --time=2-00:00:00
+#SBATCH --mem=48Gb
+#SBATCH --partition=main
+
 
 # Load Modules and environements
 module load python/3.6
