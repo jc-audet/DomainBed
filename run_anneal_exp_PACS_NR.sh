@@ -7,6 +7,7 @@
 #SBATCH --gres=gpu:4
 #SBATCH --time=4-00:00:00
 #SBATCH --mem=100Gb
+#SBATCH --exlude=cn-b004,cn-c037,cn-b001,cn-a009,cn-c011
 
 # Load Modules and environements
 module load python/3.6
@@ -45,12 +46,23 @@ python3 -m domainbed.scripts.train\
        --trial_seed 3
 
 python3 -m domainbed.scripts.anneal_sweep launch\
-       --algorithm IGA IRM VREx\
+       --algorithm IRM VREx\
        --dataset PACS\
        --data_dir $HOME/scratch/data/\
        --output_dir $HOME/scratch/anneal_experiment/results/PACS_results_NR/\
        --command_launcher multi_gpu\
        --skip_confirmation\
-       --steps 400 \
-       --n_trials 3 \
+       --steps 300 \
+       --n_trials 2 \
+       --n_anneal 20
+
+python3 -m domainbed.scripts.anneal_sweep delete_incomplete\
+       --algorithm IRM VREx\
+       --dataset PACS\
+       --data_dir $HOME/scratch/data/\
+       --output_dir $HOME/scratch/anneal_experiment/results/PACS_results_NR/\
+       --command_launcher multi_gpu\
+       --skip_confirmation\
+       --steps 300 \
+       --n_trials 2 \
        --n_anneal 20

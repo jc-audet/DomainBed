@@ -103,7 +103,7 @@ def _hparams(algorithm, dataset, random_seed):
         _hparam('anneal_iter', 10000, lambda r: int(10**r.uniform(0, 4)))
 
     if algorithm in ["IGA", "VREx", "IRM"]:
-        _hparam('reset_adam', True, lambda r: False)
+        _hparam('reset_adam', False, lambda r: False)
 
 
     # Dataset-and-algorithm-specific hparam definitions. Each block of code
@@ -112,9 +112,9 @@ def _hparams(algorithm, dataset, random_seed):
     if dataset == 'ChainEquationModel':
         _hparam('dim', 10, lambda r: 10)
         _hparam('ones', True, lambda r: True)
-        _hparam('scramble', False, lambda r: False)
+        _hparam('scramble', True, lambda r: True)
         _hparam('hetero', True, lambda r: True)
-        _hparam('hidden', False, lambda r: False)
+        _hparam('hidden', True, lambda r: False)
 
     if dataset in SMALL_IMAGES:
         _hparam('lr', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5))

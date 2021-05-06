@@ -161,54 +161,6 @@ def print_results_tables(records, selection_method, latex):
     print_table(table, header_text, alg_names, col_labels, colwidth=25,
         latex=latex)
 
-def plot_anneal_experiment(records):
-
-    grouped_records = get_grouped_anneal(records)
-
-    alg_names = Q(records).select("args.algorithm").unique()
-    alg_names = ([n for n in algorithms.ALGORITHMS if n in alg_names] +
-        [n for n in alg_names if n not in algorithms.ALGORITHMS])
-
-    # read dataset names and sort (lexicographic order)
-    dataset_names = Q(records).select("args.dataset").unique().sorted()
-    dataset_names = [d for d in datasets.DATASETS if d in dataset_names]
-
-    anneal_order = []
-    best_accs = collections.defaultdict(lambda: [])
-
-    for exp in grouped_records:
-
-        best_test_acc = (exp['records'][-1]['env0_in_acc'] + exp['records'][-1]['env0_out_acc'] ) / 2.
-
-        id = (exp['Anneal_iter'],
-            exp['algorithm'],
-            exp['dataset'])
-
-        best_accs[id].append(best_test_acc)
-    
-    best_accs = {k: np.mean(v) for k, v in best_accs.items()}
-    
-    anneal_iter = collections.defaultdict(lambda: [])
-    best_anneal = collections.defaultdict(lambda: [])
-
-    for (t,a,d), v in best_accs.items():
-        anneal_iter[(a,d)].append(t)
-        best_anneal[(a,d)].append(v)
-    
-    for k, v in best_anneal.items():
-        sort = np.argsort(anneal_iter[k])
-        anneal_iter[k] = np.array(anneal_iter[k])[sort]
-        best_anneal[k] = np.array(best_anneal[k])[sort]
-        
-    for d in dataset_names:
-        plt.figure()
-        for a in alg_names:
-            plt.plot(anneal_iter[(a,d)], best_anneal[(a,d)], label=a)
-        plt.title(d)
-        plt.legend()
-
-    plt.show()
-
 def plot_anneal_experiment_max(records):
 
     grouped_records = get_grouped_anneal(records)
@@ -415,7 +367,121 @@ def plot_Ex1_solution(records):
             plt.ylabel('Loss')
             plt.show()
 
+def plot_anneal_experiment(records, alg_names, dat_names, reset):
 
+    grouped_records = get_grouped_anneal(records)
+
+    anneal_order = []
+    final_accs = collections.defaultdict(lambda: [])
+
+    ## Assign colors
+    color_dict = {'IRM': 'r',
+                  'VREx': 'b',
+                  'SD': 'g',
+                  'IGA': 'c',
+                  'ANDMask': 'm',
+                  'ERM': 'k'}
+    line = '-' if reset=='NR' else '--'
+
+    for exp in grouped_records:
+
+        best_test_acc = (exp['records'][-1]['env0_in_acc'] + exp['records'][-1]['env0_out_acc'] ) / 2.
+
+        id = (exp['Anneal_iter'],
+            exp['algorithm'],
+            exp['dataset'])
+
+        final_accs[id].append(best_test_acc)
+    
+    final_accs = {k: np.mean(v) for k, v in final_accs.items()}
+    
+    anneal_iter = collections.defaultdict(lambda: [])
+    final_acc_iter = collections.defaultdict(lambda: [])
+
+    for (t,a,d), v in final_accs.items():
+        anneal_iter[(a,d)].append(t)
+        final_acc_iter[(a,d)].append(v)
+    
+    for k, v in final_acc_iter.items():
+        sort = np.argsort(anneal_iter[k])
+        anneal_iter[k] = np.array(anneal_iter[k])[sort]
+        final_acc_iter[k] = np.array(final_acc_iter[k])[sort]
+
+    plot_line = []
+    for d in dat_names:
+        for a in alg_names:
+            #Smooth a little
+            data = np.insert(final_acc_iter[(a,d)], 0, final_acc_iter[(a,d)][0])
+            data = np.insert(data, -1, final_acc_iter[(a,d)][-1])
+            data = np.convolve(data, np.ones(3), mode='valid')/3
+
+            #Plot
+            L, = plt.plot(anneal_iter[(a,d)], data*100, line, label=a, color = color_dict[a])
+            
+            plot_line.append(L)
+
+    return plot_line
+
+
+def plot_ERM_acc(records, acc_bar, overfit_bar, gap):
+
+    grouped_records = get_grouped_anneal(records)
+
+    anneal_order = []
+    final_accs = []
+    diff_accs = {}
+    train_steps = []
+
+    for exp in grouped_records:
+
+        id = (exp['records'][-1]['args']['seed'])
+        diff_accs[id] = []
+
+        final_acc = (exp['records'][-1]['env0_in_acc'] + exp['records'][-1]['env0_out_acc'] ) / 2.
+
+        train_steps = []
+        for step in exp['records']:
+            in_acc = ( step['env0_in_acc'] + step['env1_in_acc'] ) / 2.
+            out_acc = ( step['env0_out_acc'] + step['env1_out_acc'] ) / 2.
+            diff_accs[id].append(in_acc - out_acc)
+            train_steps.append(step['step'])
+
+
+    final_accs.append(final_acc)
+    final_diff_accs = 0
+    for k, v in diff_accs.items():
+        final_diff_accs = np.zeros(np.shape(diff_accs[k]))
+    for k, v in diff_accs.items():
+        final_diff_accs += diff_accs[k]
+
+    final_diff_accs /= len(diff_accs.keys())
+
+    final_ERM_acc = np.mean(final_accs)
+    overfit_iter = (final_diff_accs > 0.00).nonzero()[0]
+
+    if acc_bar:
+        plt.axhline(final_ERM_acc*100, color='k', linewidth=2)
+    if np.any(overfit_iter) and overfit_bar:
+        plt.axvline(train_steps[overfit_iter[0]], color='k', linewidth=2)
+        # plt.axvline(50, color='k', linewidth=2)
+
+    if gap:
+        plt.figure()
+
+        # data = np.insert(final_diff_accs, 0, final_diff_accs[0])
+        # data = np.insert(data, 0, final_diff_accs[0])
+        # data = np.insert(data, 0, final_diff_accs[0])
+        # data = np.insert(data, -1, final_diff_accs[-1])
+        # data = np.convolve(data, np.ones(5), mode='valid')/5
+        # plt.axvline(50, color='k', linewidth=2)
+        # plt.plot(sorted(train_steps), data*100)
+        # plt.xlim([0,300])
+
+        data = np.insert(final_diff_accs, 0, final_diff_accs[0])
+        data = np.insert(data, -1, final_diff_accs[-1])
+        data = np.convolve(data, np.ones(3), mode='valid')/3
+        plt.axvline(train_steps[overfit_iter[0]], color='k', linewidth=2)
+        plt.plot(sorted(train_steps), data*100)
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
@@ -428,13 +494,175 @@ if __name__ == "__main__":
 
     results_file = "results.tex" if args.latex else "results.txt"
 
-    sys.stdout = misc.Tee(os.path.join(args.input_dir, results_file), "w")
+    # sys.stdout = misc.Tee(os.path.join(args.input_dir, results_file), "w")
 
-    records = reporting.load_records(args.input_dir)
+    # ## Plot PACS NR - R 
+    # plt.figure()
+    # dat_names = ['PACS']
+    # alg_names = ['IRM', 'VREx']
+    # records = reporting.load_records(os.path.join(args.input_dir, "PACS_R"))
+    # line_R = plot_anneal_experiment(records, alg_names, dat_names, 'R')
+    # records = reporting.load_records(os.path.join(args.input_dir, "PACS_results_NR"))
+    # line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "PACS_ERM"))
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=False)
+    # plt.legend()
+    # plt.ylabel("Test Accuracy (%)")
+    # plt.xlabel("Activation Step")
+    # plt.xlim([0,300])
+    # legend1 = plt.legend(line_NR, alg_names, loc=4)
+    # plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    # plt.gca().add_artist(legend1)
+    # plt.gca().set_ylim(bottom=0)
+    # plt.savefig("PACS.png")
+
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=True)
+    # plt.ylabel("Generalization Gap (%)")
+    # plt.xlabel("Training Step")
+    # plt.xlim([0,300])
+    # plt.savefig("PACS_gap.png")
+
+    # ## Spirals
+    # plt.figure()
+    # dat_names = ['Spirals']
+    # alg_names = ['ANDMask', 'IRM', 'IGA', 'VREx', 'SD']
+    # records = reporting.load_records(os.path.join(args.input_dir, "Spirals"))
+    # line_R = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # # line_R = plot_anneal_experiment(records, ['ERM'], dat_names, 'R')
+    # # records = reporting.load_records(os.path.join(args.input_dir, "CMNIST_NR"))
+    # # line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # # records = reporting.load_records(os.path.join(args.input_dir, "results-SD"))
+    # # line_SD = plot_anneal_experiment(records, ['SD'], dat_names, 'NR')
+    # # records = reporting.load_records(os.path.join(args.input_dir, "CMNIST_ERM"))
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=False, gap=False)
+
+    # plt.ylabel("Test Accuracy (%)")
+    # plt.xlabel("Activation Step")
+    # plt.legend()
+    # # alg_names.append('SD')
+    # # line_NR.append(line_SD[0])
+    # # legend1 = plt.legend(line_NR, alg_names, loc=4)
+    # # plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    # # plt.gca().add_artist(legend1)
+    # # plt.gca().set_ylim(bottom=0)
+    # plt.savefig("Spirals.png")
+
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=False, gap=True)
+    # plt.ylabel("Generalization Gap (%)")
+    # plt.xlabel("Training Step")
+    # plt.savefig("Spirals_gap.png")
+
+    ## Plot Colored MNIST NR - R 
+    plt.figure()
+    dat_names = ['ColoredMNIST']
+    alg_names = ['ANDMask', 'IRM', 'IGA', 'VREx']
+    records = reporting.load_records(os.path.join(args.input_dir, "CMNIST_R"))
+    line_R = plot_anneal_experiment(records, alg_names, dat_names, 'R')
+    records = reporting.load_records(os.path.join(args.input_dir, "CMNIST_NR"))
+    line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    records = reporting.load_records(os.path.join(args.input_dir, "results-SD"))
+    line_SD = plot_anneal_experiment(records, ['SD'], dat_names, 'NR')
+    records = reporting.load_records(os.path.join(args.input_dir, "CMNIST_ERM"))
+    plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=False)
+
+    plt.ylabel("Test Accuracy (%)")
+    plt.xlabel("Activation Step")
+    alg_names.append('SD')
+    line_NR.append(line_SD[0])
+    legend1 = plt.legend(line_NR, alg_names, loc=4)
+    plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    plt.gca().add_artist(legend1)
+    plt.gca().set_ylim(bottom=0)
+    plt.savefig("CMNIST.png")
+
+    plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=True)
+    plt.ylabel("Generalization Gap (%)")
+    plt.xlabel("Training Step")
+    plt.savefig("CMNIST_gap.png")
+
+    # # Plot Colored CSMNIST NR - R 
+    # plt.figure()
+    # dat_names = ['CSMNIST']
+    # alg_names = ['ANDMask', 'IRM', 'IGA', 'VREx']
+    # records = reporting.load_records(os.path.join(args.input_dir, "CSMNIST_R"))
+    # line_R = plot_anneal_experiment(records, alg_names, dat_names, 'R')
+    # records = reporting.load_records(os.path.join(args.input_dir, "CSMNIST_NR"))
+    # line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "results-SD"))
+    # line_SD = plot_anneal_experiment(records, ['SD'], dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "CSMNIST_ERM"))
+    # plot_ERM_acc(records, acc_bar = True, overfit_bar=False, gap=False)
+    # plt.ylabel("Test Accuracy (%)")
+    # plt.xlabel("Activation Step")
+    # alg_names.append('SD')
+    # line_NR.append(line_SD[0])
+    # legend1 = plt.legend(line_NR, alg_names, loc=4)
+    # plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    # plt.gca().add_artist(legend1)
+    # plt.gca().set_ylim(bottom=0)
+    # plt.savefig("CSMNIST.png")
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=True)
+    # plt.ylabel("Generalization Gap (%)")
+    # plt.xlabel("Training Step")
+    # plt.savefig("CSMNIST_gap.png")
+
+    # # ## Plot Colored CFMNIST NR - R 
+    # plt.figure()
+    # dat_names = ['CFMNIST']
+    # alg_names = ['ANDMask', 'IRM', 'IGA', 'VREx']
+    # records = reporting.load_records(os.path.join(args.input_dir, "CFMNIST_R"))
+    # line_R = plot_anneal_experiment(records, alg_names, dat_names, 'R')
+    # records = reporting.load_records(os.path.join(args.input_dir, "CFMNIST_NR"))
+    # line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "results-SD"))
+    # line_SD = plot_anneal_experiment(records, ['SD'], dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "CFMNIST_ERM"))
+    # plot_ERM_acc(records, acc_bar = True, overfit_bar=False, gap=False)
+    # plt.ylabel("Test Accuracy (%)")
+    # plt.xlabel("Activation Step")
+    # alg_names.append('SD')
+    # line_NR.append(line_SD[0])
+    # legend1 = plt.legend(line_NR, alg_names, loc=4)
+    # plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    # plt.gca().add_artist(legend1)
+    # plt.gca().set_ylim(bottom=0)
+    # plt.savefig("CFMNIST.png")
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=True)
+    # plt.ylabel("Generalization Gap (%)")
+    # plt.xlabel("Training Step")
+    # plt.savefig("CFMNIST_gap.png")
+
+    # ## Plot Colored ACMNIST NR - R 
+    # plt.figure()
+    # dat_names = ['ACMNIST']
+    # alg_names = ['ANDMask', 'IRM', 'IGA', 'VREx']
+    # records = reporting.load_records(os.path.join(args.input_dir, "ACMNIST_R"))
+    # line_R = plot_anneal_experiment(records, alg_names, dat_names, 'R')
+    # records = reporting.load_records(os.path.join(args.input_dir, "ACMNIST_NR"))
+    # line_NR = plot_anneal_experiment(records, alg_names, dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "results-SD"))
+    # line_SD = plot_anneal_experiment(records, ['SD'], dat_names, 'NR')
+    # records = reporting.load_records(os.path.join(args.input_dir, "ACMNIST_ERM"))
+    # plot_ERM_acc(records, acc_bar = True, overfit_bar=False, gap=False)
+    # plt.ylabel("Test Accuracy (%)")
+    # plt.xlabel("Activation Step")
+    # alg_names.append('SD')
+    # line_NR.append(line_SD[0])
+    # legend1 = plt.legend(line_NR, alg_names, loc=10)
+    # plt.legend([line_R[1], line_NR[1]], ['Adam Reset', 'Rescaling'], loc=3)
+    # plt.gca().add_artist(legend1)
+    # plt.gca().set_ylim(bottom=0)
+    # plt.savefig("ACMNIST.png")
+    # plot_ERM_acc(records, acc_bar=True, overfit_bar=True, gap=True)
+    # plt.ylabel("Generalization Gap (%)")
+    # plt.xlabel("Training Step")
+    # plt.savefig("ACMNIST_gap.png")
+
+    plt.show()
+
     # plot_Ex1_solution(records)
-    plot_anneal_experiment(records)
     # plot_anneal_experiment_max(records)
-    plot_training_curve(records, 'ERM')
+    # plot_training_curve(records, 'ERM')
    
     # if args.latex:
     #     print("\\documentclass{article}")

@@ -99,8 +99,8 @@ python3 -m domainbed.scripts.sweep launch\
 ```
 ```sh
 python3 -m domainbed.scripts.anneal_sweep launch\
-       --algorithm ERM ANDMask IRM IGA VREx\
-       --dataset PACS\
+       --algorithm Ex1\
+       --dataset ChainEquationModel\
        --data_dir ./../../Data/\
        --output_dir=./misc/test_anneal_sweep/\
        --command_launcher local
@@ -137,7 +137,7 @@ python3 -m domainbed.scripts.collect_results\
 ````
 ````sh
 python3 -m domainbed.scripts.plot_results\
-       --input_dir=/hdd/Results/OOD_scheduling/ColoredMNIST_R_results/
+       --input_dir=/hdd/Results/OOD_scheduling/
 
 ````
 ````sh

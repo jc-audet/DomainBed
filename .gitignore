@@ -5,3 +5,5 @@ domainbed/data/*
 train_output/*
 domainbed/misc/*
 pretrained_models/*
+
+pretrained_models
