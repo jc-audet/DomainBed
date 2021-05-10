@@ -39,11 +39,10 @@ DATASETS = [
     # WILDS datasets
     "WILDSCamelyon",
     "WILDSFMoW",
-    "WILDSIWildCams",
-    "WILDSCelebA",
+    # "WILDSIWildCams",
+    # "WILDSCelebA",
     #Other
-    "Spirals",
-    "ChainEquationModel"
+    "Spirals"
 ]
 
 def get_dataset_class(dataset_name):
@@ -220,60 +219,6 @@ class CFMNIST(MultipleEnvironmentMNIST):
     def torch_xor_(self, a, b):
         return (a - b).abs()
 
-class ACMNIST(MultipleEnvironmentMNIST):
-    ENVIRONMENTS = ['0.9', '0.2','0.1']
-
-    def __init__(self, root, test_envs, hparams):
-        super(ACMNIST, self).__init__(root, [0.9, 0.2, 0.1],
-                                         self.color_dataset, (2, 28, 28,), 2)
-
-        self.input_shape = (2, 28, 28,)
-        self.num_classes = 2
-        self.p_label = 0.25
-
-
-    def color_dataset(self, images, labels, environment):
-        # Convert y>5 to 1 and y<5 to 0.
-        self.p_label = 0.25
-        y = (labels >= 5).float()
-        num_samples = len(y)
-
-        y_mod = np.abs(y.unsqueeze(1) - np.random.binomial(1, self.p_label, (num_samples, 1)))
-        z = np.abs(y_mod - np.random.binomial(1, environment, (num_samples, 1)))
-        red = np.where(z == 1)[0]
-
-        tsh = 0.0
-        chR = cp.deepcopy(images[red, :])
-        chR[chR > tsh] = 1
-        chG = cp.deepcopy(images[red, :])
-        chG[chG > tsh] = 0
-        chB = cp.deepcopy(images[red, :])
-        chB[chB > tsh] = 0
-        r = np.concatenate((chR.unsqueeze(3), chG.unsqueeze(3)), axis=3)
-
-        green = np.where(z == 0)[0]
-        tsh = 0.0
-        chR1 = cp.deepcopy(images[green, :])
-        chR1[chR1 > tsh] = 0
-        chG1 = cp.deepcopy(images[green, :])
-        chG1[chG1 > tsh] = 1
-        chB1 = cp.deepcopy(images[green, :])
-        chB1[chB1 > tsh] = 0
-        g = np.concatenate((chR1.unsqueeze(3), chG1.unsqueeze(3)), axis=3)
-
-        dataset = np.transpose(np.concatenate((r, g), axis=0), (0, 3, 1, 2))
-        dataset = torch.tensor(dataset, dtype=torch.float32)
-
-        labels = torch.squeeze(torch.tensor(np.concatenate((y_mod[red], y_mod[green]), axis=0), dtype=torch.long),1)
-
-        return TensorDataset(dataset,labels)
-
-    def torch_bernoulli_(self, p, size):
-        return (torch.rand(size) < p).float()
-
-    def torch_xor_(self, a, b):
-        return (a - b).abs()
-
 class CSMNIST(MultipleEnvironmentMNIST):
     ENVIRONMENTS = ['0.9', '0.2','0.1']
 
@@ -368,7 +313,6 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
 
         return TensorDataset(x, y)
 
-
 class Spirals(MultipleDomainDataset):
     CHECKPOINT_FREQ = 10
     ENVIRONMENTS = [str(i) for i in range(8)]
@@ -451,6 +395,7 @@ class Spirals(MultipleDomainDataset):
         return inputs.astype(np.float32), labels.astype(np.long)
 
 class MultipleEnvironmentImageFolder(MultipleDomainDataset):
+    N_STEPS = 1001           # Default, subclasses may override
     def __init__(self, root, test_envs, augment, hparams):
         super().__init__()
         environments = [f.name for f in os.scandir(root) if f.is_dir()]
@@ -619,8 +564,8 @@ class WILDSDataset(MultipleDomainDataset):
 #         dataset = Camelyon17Dataset(root_dir=root)
 #         super().__init__(
 #             dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
-#
-#
+
+
 # class WILDSFMoW(WILDSDataset):
 #     ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
 #             "region_4", "region_5"]
@@ -628,16 +573,16 @@ class WILDSDataset(MultipleDomainDataset):
 #         dataset = FMoWDataset(root_dir=root)
 #         super().__init__(
 #             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
-#
-#
+
+
 # class WILDSIWildCam(WILDSDataset):
 #     ENVIRONMENTS = [ str(i) for i in range(323)]
 #     def __init__(self, root, test_envs, hparams):
 #         dataset = IWildCamDataset(root_dir=root)
 #         super().__init__(
 #             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
-#
-#
+
+
 # class WILDSCelebA(WILDSDataset):
 #     ENVIRONMENTS = [ 'blond', 'not blond']
 #     def __init__(self, root, test_envs, hparams):
@@ -645,68 +590,4 @@ class WILDSDataset(MultipleDomainDataset):
 #         super().__init__(
 #             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
 
-            
-
-class ChainEquationModel(MultipleDomainDataset):
-    """
-    Example 1 from the original IRM paper (https://arxiv.org/pdf/1907.02893.pdf)
-    Implementation taken from the paper code release (https://github.com/facebookresearch/InvariantRiskMinimization/blob/master/code/experiment_synthetic/sem.py)
-    """
-    N_STEPS = 50000
-    CHECKPOINT_FREQ = 10
-    ENVIRONMENTS = ['0.2', '2.', '5.']
-
-    def __init__(self, root, test_envs, hparams):
-        super().__init__()
-        self.hetero = hparams['hetero']
-        self.hidden = hparams['hidden']
-        self.dim = hparams['dim'] // 2
-        self.num_classes = 1
-        self.input_shape = (hparams['dim'],)
-
-        if hparams['ones']:
-            self.wxy = torch.eye(self.dim)
-            self.wyz = torch.eye(self.dim)
-        else:
-            self.wxy = torch.randn(self.dim, self.dim) / hparams['dim']
-            self.wyz = torch.randn(self.dim, self.dim) / hparams['dim']
-
-        if hparams['scramble']:
-            self.scramble, _ = torch.qr(torch.randn(hparams['dim'], hparams['dim']))
-        else:
-            self.scramble = torch.eye(hparams['dim'])
-
-        if hparams['hidden']:
-            self.whx = torch.randn(self.dim, self.dim) / hparams['dim']
-            self.why = torch.randn(self.dim, self.dim) / hparams['dim']
-            self.whz = torch.randn(self.dim, self.dim) / hparams['dim']
-        else:
-            self.whx = torch.eye(self.dim, self.dim)
-            self.why = torch.zeros(self.dim, self.dim)
-            self.whz = torch.zeros(self.dim, self.dim)
-
-        ## Create dataset
-        self.datasets = []
-
-        for e in self.ENVIRONMENTS:
-            self.datasets.append(self(float(e)))
         
-
-    def solution(self):
-        w = torch.cat((self.wxy.sum(1), torch.zeros(self.dim))).view(-1, 1)
-        return w, self.scramble
-
-    def __call__(self, env, n = 1000):
-        h = torch.randn(n, self.dim) * env
-        x = h @ self.whx + torch.randn(n, self.dim) * env
-
-        if self.hetero:
-            y = x @ self.wxy + h @ self.why + torch.randn(n, self.dim) * env
-            z = y @ self.wyz + h @ self.whz + torch.randn(n, self.dim)
-        else:
-            y = x @ self.wxy + h @ self.why + torch.randn(n, self.dim)
-            z = y @ self.wyz + h @ self.whz + torch.randn(n, self.dim) * env
-
-        return TensorDataset(torch.cat((x, z), 1) @ self.scramble, y.sum(1, keepdim=True))
-
-    

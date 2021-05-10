@@ -101,9 +101,13 @@ def make_args_list(n_trials, dataset_names, algorithms, n_hparams, steps,
     for trial_seed in range(n_trials):
         for dataset in dataset_names:
             for algorithm in algorithms:
-                if single_test_envs:
-                    all_test_envs = [
-                        [i] for i in range(datasets.num_environments(dataset))]
+                # if single_test_envs:
+                #     all_test_envs = [
+                #         [i] for i in range(datasets.num_environments(dataset))]
+                if dataset in ['Spirals', 'ColoredMNIST', 'CFMNIST', 'CSMNIST', 'TerraIncognita']:
+                    all_test_envs = [0]
+                elif dataset in ['PACS', 'VLCS']:
+                    all_test_envs = [3]
                 else:
                     all_test_envs = all_test_env_combinations(
                         datasets.num_environments(dataset))

@@ -64,8 +64,8 @@ Download the datasets:
 
 ```sh
 python3 -m domainbed.scripts.download \
-       --dataset=WILDSCelebA\
-       --data_dir=$HOME/scratch/data/
+       --dataset=MNIST\
+       --data_dir=/hdd/data/
 ```
 
 Train a model:
@@ -73,18 +73,9 @@ Train a model:
 ```sh
 python3 -m domainbed.scripts.train\
        --data_dir=/home/jcaudet/Documents/Data/\
-       --algorithm IRM\
+       --algorithm VREx\
        --dataset ColoredMNIST\
        --test_env 0
-```
-## For Ex1 model
-```sh
-python3 -m domainbed.scripts.train\
-       --data_dir=.\
-       --algorithm Ex1\
-       --dataset ChainEquationModel\
-       --test_env 0\
-       --save_model_every_checkpoint
 ```
 
 Launch a sweep:
@@ -92,16 +83,8 @@ Launch a sweep:
 ```sh
 python3 -m domainbed.scripts.sweep launch\
        --algorithm ERM ANDMask\
-       --dataset Spirals\
+       --dataset ColoredMNIST\
        --data_dir ./domainbed/data/\
-       --output_dir=./misc/test_anneal_sweep/\
-       --command_launcher local
-```
-```sh
-python3 -m domainbed.scripts.anneal_sweep launch\
-       --algorithm Ex1\
-       --dataset ChainEquationModel\
-       --data_dir ./../../Data/\
        --output_dir=./misc/test_anneal_sweep/\
        --command_launcher local
 ```
