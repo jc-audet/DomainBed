@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --time=5-00:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --mem=100Gb
 
 # Load Modules and environements
@@ -19,18 +19,18 @@ cd $HOME/GitRepos/DomainBed/
 
 python3 -m domainbed.scripts.sweep delete_incomplete\
        --algorithm IRM VREx SD IGA\
-       --dataset ColoredMNIST VLCS PACS TerraIncognita \
+       --dataset PACS\
        --data_dir $HOME/scratch/data/ \
        --output_dir $HOME/scratch/anneal_experiment/results/hyper_sweep/ \
        --command_launcher multi_gpu \
        --skip_confirmation \
-       --n_trials 3
+       --n_trials 1
 
 python3 -m domainbed.scripts.sweep launch\
        --algorithm IRM VREx SD IGA\
-       --dataset ColoredMNIST VLCS PACS TerraIncognita \
+       --dataset PACS \
        --data_dir $HOME/scratch/data/ \
        --output_dir $HOME/scratch/anneal_experiment/results/hyper_sweep/ \
        --command_launcher multi_gpu \
        --skip_confirmation \
-       --n_trials 3
+       --n_trials 1
