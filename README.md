@@ -73,7 +73,7 @@ Train a model:
 ```sh
 python3 -m domainbed.scripts.train\
        --data_dir=/home/jcaudet/Documents/Data/\
-       --algorithm VREx\
+       --algorithm IGA\
        --dataset ColoredMNIST\
        --test_env 0
 ```

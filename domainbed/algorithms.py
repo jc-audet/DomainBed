@@ -988,10 +988,10 @@ class IGA(ERM):
             env_loss = F.cross_entropy(logits, y)
             total_loss += env_loss
 
-            grads.append( autograd.grad(env_loss, self.network.parameters(), retain_graph=True) )
+            grads.append( autograd.grad(env_loss, self.network.parameters(), retain_graph=True, create_graph=True) )
             
         mean_loss = total_loss / len(minibatches)
-        mean_grad = autograd.grad(mean_loss, self.network.parameters(), retain_graph=True)
+        mean_grad = autograd.grad(mean_loss, self.network.parameters(), retain_graph=True, create_graph=True)
 
         # compute trace penalty
         penalty_value = 0
