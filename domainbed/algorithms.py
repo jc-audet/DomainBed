@@ -80,6 +80,7 @@ class ERM(Algorithm):
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
             lr=self.hparams["lr"],
+            betas=(0.9, 0.999),
             weight_decay=self.hparams['weight_decay']
         )
 

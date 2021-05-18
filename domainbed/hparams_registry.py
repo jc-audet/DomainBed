@@ -28,7 +28,7 @@ def _hparams(algorithm, dataset, random_seed):
 
     # Unconditional hparam definitions.
 
-    _hparam('data_augmentation', True, lambda r: True)
+    _hparam('data_augmentation', False, lambda r: True)
     _hparam('resnet18', False, lambda r: False)
     _hparam('resnet_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
     _hparam('class_balanced', False, lambda r: False)
@@ -106,7 +106,7 @@ def _hparams(algorithm, dataset, random_seed):
 
     if dataset in NON_IMAGES:
         _hparam('mlp_width', 256, lambda r: int(2 ** r.uniform(6, 10)))
-        _hparam('mlp_depth', 2, lambda r: int(r.choice([3, 4, 5])))
+        _hparam('mlp_depth', 3, lambda r: int(r.choice([3, 4, 5])))
         _hparam('mlp_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
 
     if dataset in SMALL_IMAGES:

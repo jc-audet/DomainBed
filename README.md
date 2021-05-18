@@ -71,10 +71,12 @@ Train a model:
 
 ```sh
 python3 -m domainbed.scripts.train\
-       --data_dir=./domainbed/data/MNIST/\
-       --algorithm IGA\
-       --dataset ColoredMNIST\
-       --test_env 2
+       --algorithm ANDMask\
+       --dataset Spirals\
+       --test_env 0 \
+       --holdout_fraction 0.001\
+       --steps 600
+
 ```
 
 Launch a sweep:
