@@ -131,6 +131,7 @@ if __name__ == "__main__":
         model_selection.IIDAccuracySelectionMethod,
         model_selection.LeaveOneOutSelectionMethod,
         model_selection.OracleSelectionMethod,
+        model_selection.FullOracleSelectionMethod,
     ]
 
     for selection_method in SELECTION_METHODS:
